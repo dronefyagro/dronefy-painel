@@ -28,6 +28,39 @@
 }
 html{scroll-behavior:smooth}
 body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden}
+
+/* ── MODO TV ─────────────────────────────────────────── */
+body.tv-mode .sidebar{display:none}
+body.tv-mode .main{margin-left:0}
+body.tv-mode .topbar{padding:10px 28px;background:var(--surface)}
+body.tv-mode .content{padding:20px 28px}
+body.tv-mode .kpi-val{font-size:32px}
+body.tv-mode .kpi-label{font-size:13px}
+body.tv-mode .kpi-card{padding:18px 12px}
+body.tv-mode .area-title{font-size:15px}
+body.tv-mode .area-card{padding:16px 18px;margin-bottom:12px}
+body.tv-mode .team-card{padding:18px}
+body.tv-mode .team-name{font-size:15px}
+body.tv-mode .team-areas{font-size:13px}
+body.tv-mode .section-title{font-size:18px}
+body.tv-mode .prog-label{font-size:13px}
+body.tv-mode #search-wrap{display:none!important}
+body.tv-mode #btn-nova{display:none!important}
+body.tv-mode .filter-row{display:none}
+body.tv-mode .contagem{font-size:13px}
+/* TV nav tabs */
+.tv-tabs{display:none}
+body.tv-mode .tv-tabs{display:flex;gap:8px;align-items:center}
+.tv-tab{padding:7px 18px;border-radius:20px;font-size:13px;font-weight:600;
+  border:1px solid var(--border);color:var(--text3);background:none;cursor:pointer}
+.tv-tab.active{background:var(--green2);color:var(--white);border-color:rgba(34,197,94,.4)}
+/* TV progress bar */
+.tv-progress{display:none}
+body.tv-mode .tv-progress{display:flex;align-items:center;gap:10px;
+  background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 16px}
+.tv-prog-fill{height:6px;border-radius:3px;background:var(--green);transition:width .5s linear}
+/* Scrollbar oculta no modo TV */
+body.tv-mode ::-webkit-scrollbar{width:0;height:0}
 input,select,textarea{background:var(--panel);border:1px solid var(--border);border-radius:8px;
   padding:9px 12px;color:var(--text);font-size:13px;outline:none;width:100%;font-family:'Inter',sans-serif;transition:border .15s}
 input:focus,select:focus,textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(34,197,94,.1)}
@@ -295,10 +328,30 @@ button:active{transform:scale(.97)}
       <span class="search-icon">🔍</span>
       <input id="search-input" placeholder="Buscar fazenda ou produtor..." oninput="window.renderAreas()"/>
     </div>
+    <!-- TV: abas de navegação -->
+    <div class="tv-tabs" id="tv-tabs">
+      <button class="tv-tab active" id="tv-tab-painel" onclick="window.tvIrPara('painel')">📊 Painel</button>
+      <button class="tv-tab" id="tv-tab-rotas" onclick="window.tvIrPara('rotas')">📍 Rotas</button>
+      <button class="tv-tab" id="tv-tab-agenda" onclick="window.tvIrPara('agenda')">📅 Agenda</button>
+    </div>
     <div class="topbar-actions">
       <button class="btn-ghost btn-icon" title="Atualizar agora" onclick="window.carregarDados(true)" id="btn-refresh">🔄</button>
       <button class="btn-primary" onclick="window.abrirNovaArea()" style="display:none" id="btn-nova">+ Nova Área</button>
     </div>
+  </div>
+
+  <!-- TV: barra de progresso de rotação -->
+  <div class="tv-progress" id="tv-progress-bar" style="margin:0 24px 0;border-radius:0 0 10px 10px;border-top:none">
+    <span id="tv-next-label" style="font-size:12px;color:var(--text3);white-space:nowrap;min-width:80px">Próximo: Rotas</span>
+    <div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+      <div class="tv-prog-fill" id="tv-prog-fill" style="width:0%"></div>
+    </div>
+    <span id="tv-countdown" style="font-size:12px;color:var(--green3);font-weight:600;min-width:28px;text-align:right">30s</span>
+    <button onclick="window.tvPausar()" id="tv-pause-btn"
+      style="background:none;border:1px solid var(--border);border-radius:6px;
+      padding:3px 10px;color:var(--text3);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif">
+      ⏸
+    </button>
   </div>
 
   <!-- CONTENT -->
@@ -1472,6 +1525,8 @@ window.renderMetas=window.renderMetas;
 window.salvarMetas=window.salvarMetas;
 window.renderRotas=window.renderRotas;
 window.filtrarPorRota=window.filtrarPorRota;
+window.tvIrPara=window.tvIrPara;
+window.tvPausar=window.tvPausar;
 
 
 // ═══ SISTEMA DE SENHA ════════════════════════════════════════════════
@@ -1578,6 +1633,106 @@ window.trocarSenha=function(){
   ["senha-atual","senha-nova","senha-conf"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
 };
 
+
+// ═══ MODO TV ═══════════════════════════════════════════════════════════
+const TV_ABAS = ["painel","rotas","agenda"];
+const TV_LABELS = {painel:"Painel",rotas:"Rotas",agenda:"Agenda"};
+let tvAtivo = false;
+let tvIntervalo = 30; // segundos por aba (configurável)
+let tvAbaIdx = 0;
+let tvTimer = null;
+let tvCountTimer = null;
+let tvPausado = false;
+let tvContador = 0;
+
+function iniciarModoTV(){
+  const params = new URLSearchParams(window.location.search);
+  if(!params.has("tv")) return;
+
+  tvAtivo = true;
+  tvIntervalo = parseInt(params.get("tv"))||30;
+  document.body.classList.add("tv-mode");
+
+  // Wake lock — impede a tela de apagar
+  if("wakeLock" in navigator){
+    navigator.wakeLock.request("screen").catch(()=>{});
+  }
+
+  // Revalidar wake lock quando visibilidade mudar
+  document.addEventListener("visibilitychange",()=>{
+    if(document.visibilityState==="visible"&&"wakeLock" in navigator){
+      navigator.wakeLock.request("screen").catch(()=>{});
+    }
+  });
+
+  // Auto-refresh mais agressivo no modo TV (a cada 2 min)
+  autoInterval = 2;
+  localStorage.setItem("dronefy-auto","2");
+
+  console.log("📺 Modo TV ativo — alternando a cada",tvIntervalo,"segundos");
+  tvIniciarRotacao();
+}
+
+function tvIniciarRotacao(){
+  if(tvTimer) clearInterval(tvTimer);
+  if(tvCountTimer) clearInterval(tvCountTimer);
+  tvContador = tvIntervalo;
+  tvAtualizarUI();
+
+  tvCountTimer = setInterval(()=>{
+    if(tvPausado) return;
+    tvContador--;
+    tvAtualizarProgressBar();
+    if(tvContador<=0){
+      tvContador = tvIntervalo;
+      tvAvanar();
+    }
+  },1000);
+}
+
+function tvAvanar(){
+  tvAbaIdx = (tvAbaIdx+1) % TV_ABAS.length;
+  window.setAba(TV_ABAS[tvAbaIdx]);
+  tvAtualizarUI();
+}
+
+function tvAtualizarUI(){
+  // Atualizar tabs
+  TV_ABAS.forEach((a,i)=>{
+    const el=document.getElementById("tv-tab-"+a);
+    if(el) el.classList.toggle("active", i===tvAbaIdx);
+  });
+  // Atualizar label próximo
+  const proximo = TV_ABAS[(tvAbaIdx+1)%TV_ABAS.length];
+  const lbl = document.getElementById("tv-next-label");
+  if(lbl) lbl.textContent = "Próximo: "+TV_LABELS[proximo];
+}
+
+function tvAtualizarProgressBar(){
+  const pct = Math.round(((tvIntervalo-tvContador)/tvIntervalo)*100);
+  const fill = document.getElementById("tv-prog-fill");
+  const count = document.getElementById("tv-countdown");
+  if(fill) fill.style.width = pct+"%";
+  if(count) count.textContent = tvContador+"s";
+}
+
+window.tvIrPara=function(aba){
+  tvAbaIdx = TV_ABAS.indexOf(aba);
+  if(tvAbaIdx<0) tvAbaIdx=0;
+  tvContador = tvIntervalo;
+  tvAtualizarUI();
+  tvAtualizarProgressBar();
+  window.setAba(aba);
+};
+
+window.tvPausar=function(){
+  tvPausado=!tvPausado;
+  const btn=document.getElementById("tv-pause-btn");
+  if(btn) btn.textContent = tvPausado?"▶":"⏸";
+  const fill=document.getElementById("tv-prog-fill");
+  if(fill) fill.style.background = tvPausado?"var(--amber)":"var(--green)";
+};
+
 // ═══ INIT ════════════════════════════════════════════════════════════
 document.addEventListener("DOMContentLoaded",()=>{
   const hoje=new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
@@ -1588,7 +1743,6 @@ document.addEventListener("DOMContentLoaded",()=>{
   else{
     setConnStatus(false);
     renderTeam();
-    // Show "not connected" state in panel
     const lista=document.getElementById("lista-areas");
     if(lista)lista.innerHTML=`<div class="empty-state">
       <div class="empty-icon">🔌</div>
@@ -1597,6 +1751,8 @@ document.addEventListener("DOMContentLoaded",()=>{
       <button class="btn-primary" onclick="window.acessarConfig()" style="padding:10px 20px">⚙️ Ir para Configurações</button>
     </div>`;
   }
+  // Iniciar modo TV se parâmetro ?tv estiver na URL
+  iniciarModoTV();
 });
 </script>
 </body>
