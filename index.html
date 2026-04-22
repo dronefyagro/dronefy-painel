@@ -1499,6 +1499,88 @@ window.salvarNovaArea=async function(){
   }
 };
 
+
+// ═══ ROTAS ═══════════════════════════════════════════════════════════════
+window.renderRotas=function(){
+  var resumoEl=document.getElementById("rotas-resumo");
+  var listaEl=document.getElementById("rotas-lista");
+  if(!resumoEl||!listaEl)return;
+  var rotaMap={};
+  areas.forEach(function(a){
+    var rota=a.Rota||"Sem Rota";
+    if(!rotaMap[rota])rotaMap[rota]={nome:rota,areas:[],totalHa:0,armInstaladas:0,armRecolhidas:0,atrasos:0,alertas:0,colabs:[]};
+    var r=rotaMap[rota];
+    r.areas.push(a);
+    r.totalHa+=parseFloat(a.HA)||0;
+    r.armInstaladas+=parseInt(a.ArmadilhasInstaladas)||0;
+    r.armRecolhidas+=parseInt(a.ArmadilhasRecolhidas)||0;
+    if(a.Status==="atraso")r.atrasos++;
+    if(a.Status==="alerta")r.alertas++;
+    if(a.Colaborador&&r.colabs.indexOf(a.Colaborador)<0)r.colabs.push(a.Colaborador);
+  });
+  var rotas=Object.values(rotaMap).sort(function(a,b){return a.nome.localeCompare(b.nome);});
+  if(!rotas.length){
+    resumoEl.innerHTML="";
+    listaEl.innerHTML='<div class="empty-state"><div class="empty-icon">📍</div><div>Nenhuma área cadastrada</div></div>';
+    return;
+  }
+  var semRota=rotas.every(function(r){return r.nome==="Sem Rota";});
+  if(semRota){
+    resumoEl.innerHTML="";
+    listaEl.innerHTML='<div class="empty-state"><div class="empty-icon">📍</div>'
+      +'<div style="color:var(--amber);font-weight:600;margin-bottom:8px">Coluna Rota não preenchida</div>'
+      +'<div style="color:var(--text3);font-size:13px">Adicione a coluna R com cabeçalho <b>Rota</b> na planilha e preencha o nome da rota de cada área.</div></div>';
+    return;
+  }
+  var cores=["#3B82F6","#22C55E","#F59E0B","#A855F7","#14B8A6","#F97316","#EF4444"];
+  resumoEl.innerHTML=rotas.map(function(r,idx){
+    var cor=cores[idx%cores.length];
+    var pend=r.armInstaladas-r.armRecolhidas;
+    var pct=r.armInstaladas>0?Math.round((r.armRecolhidas/r.armInstaladas)*100):0;
+    var colabs=r.colabs.join(", ")||"—";
+    return '<div style="background:var(--card);border:1px solid '+cor+'33;border-top:3px solid '+cor+';border-radius:14px;padding:18px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">'
+      +'<div><div style="font-weight:700;font-size:15px;color:var(--white)">📍 '+r.nome+'</div>'
+      +'<div style="font-size:11px;color:var(--text3)">'+colabs+'</div></div>'
+      +'<div style="text-align:right"><div style="font-size:22px;font-weight:800;color:'+cor+'">'+r.areas.length+'</div>'
+      +'<div style="font-size:10px;color:var(--text3)">áreas</div></div></div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">'
+      +'<div style="background:var(--bg);border-radius:8px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:700;color:var(--white)">'+Math.round(r.totalHa).toLocaleString("pt-BR")+'</div><div style="font-size:9px;color:var(--text3)">ha total</div></div>'
+      +'<div style="background:var(--bg);border-radius:8px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:700;color:'+(r.atrasos>0?"var(--red)":"var(--white)")+'">'+r.atrasos+'</div><div style="font-size:9px;color:var(--text3)">atrasos</div></div>'
+      +'<div style="background:var(--bg);border-radius:8px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:700;color:var(--white)">'+r.alertas+'</div><div style="font-size:9px;color:var(--text3)">atenção</div></div></div>'
+      +(r.armInstaladas>0?'<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:var(--text3)">🪤 '+r.armInstaladas+' instal. · '+r.armRecolhidas+' recolh. · <span style="color:'+(pend>0?"var(--amber)":"var(--green3)")+'">'+pend+' pend.</span></span><span style="color:'+cor+';font-weight:600">'+pct+'%</span></div><div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+(pct>=100?"var(--green)":cor)+';border-radius:3px"></div></div></div>':"")
+      +'<button onclick="window.filtrarPorRota(\'' + r.nome + '\')" style="width:100%;background:'+cor+'15;border:1px solid '+cor+'33;border-radius:8px;padding:7px;color:'+cor+';font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Ver áreas desta rota →</button></div>';
+  }).join("");
+  listaEl.innerHTML=rotas.map(function(r,idx){
+    var cor=cores[idx%cores.length];
+    return '<div style="margin-bottom:20px">'
+      +'<div style="font-weight:700;font-size:14px;color:'+cor+';margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)">📍 '+r.nome+' <span style="font-size:11px;font-weight:400;color:var(--text3)">'+r.areas.length+' área(s) · '+Math.round(r.totalHa).toLocaleString("pt-BR")+' ha</span></div>'
+      +r.areas.map(function(a){
+        var st=STATUS[a.Status]||STATUS.ok;
+        var fi=FLUXO[parseInt(a.Fluxo)]||FLUXO[1];
+        var rc=getCorColab(a.Colaborador);
+        var enc=encodeURIComponent(JSON.stringify(a));
+        var armInst=parseInt(a.ArmadilhasInstaladas)||0;
+        var armRec=parseInt(a.ArmadilhasRecolhidas)||0;
+        var pend=armInst-armRec;
+        return '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:6px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="window.abrirModal(\'' + enc + '\')">'
+          +'<div style="flex:1;min-width:0"><div style="color:var(--white);font-weight:600;font-size:13px">'+(a.Fazenda||"—")+'</div>'
+          +(a["Produtor Rural"]?'<div style="color:var(--text3);font-size:11px">👤 '+a["Produtor Rural"]+'</div>':"")+'</div>'
+          +'<div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end">'
+          +'<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:'+fi.color+'15;color:'+fi.color+'">'+fi.icon+' '+fi.label+'</span>'
+          +'<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:'+rc+'15;color:'+rc+'">'+(a.Colaborador||"—")+'</span>'
+          +'<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:var(--border);color:var(--text3)">'+(a.HA||0)+' ha</span>'
+          +'<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:'+st.color+'15;color:'+st.color+'">'+st.icon+' '+st.label+'</span>'
+          +(armInst>0?'<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:#22C55E15;color:var(--green3)">🪤 '+armInst+'|'+armRec+'|'+(pend>0?'⏳'+pend:'✓')+'</span>':"")
+          +'</div></div>';
+      }).join("")+'</div>';
+  }).join("");
+};
+window.filtrarPorRota=function(rota){
+  window.setAba("painel");
+  var s=document.getElementById("search-input");
+  if(s){s.value=rota;window.renderAreas();}
+};
 // ═══ WINDOW EXPORTS ════════════════════════════════════════════════════
 window.setAba=window.setAba;
 window.conectar=window.conectar;
@@ -1638,7 +1720,7 @@ window.trocarSenha=function(){
 const TV_ABAS = ["painel","rotas","agenda"];
 const TV_LABELS = {painel:"Painel",rotas:"Rotas",agenda:"Agenda"};
 let tvAtivo = false;
-let tvIntervalo = 60; // segundos por aba (configurável)
+let tvIntervalo = 30; // segundos por aba (configurável)
 let tvAbaIdx = 0;
 let tvTimer = null;
 let tvCountTimer = null;
@@ -1650,7 +1732,7 @@ function iniciarModoTV(){
   if(!params.has("tv")) return;
 
   tvAtivo = true;
-  tvIntervalo = parseInt(params.get("tv"))||60;
+  tvIntervalo = parseInt(params.get("tv"))||30;
   document.body.classList.add("tv-mode");
 
   // Wake lock — impede a tela de apagar
