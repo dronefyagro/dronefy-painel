@@ -559,7 +559,7 @@ const APPS_SCRIPT=`function doGet(e) {
   const headers = data[0];
   const rows = data.slice(1).filter(r => r[0]).map(r => {
     const obj = {};
-    headers.forEach((h, i) => { obj[h] = r[i]; });
+    headers.forEach((h, i) => { if(h) obj[String(h).trim()] = r[i]; });
     return obj;
   });
   return ContentService
@@ -863,9 +863,9 @@ window.renderAreas=function(){
             ${prazoT?`<span class="pill" style="color:${prazoC};border-color:${prazoC}44">${prazoT}</span>`:""}
             ${tempo!==null?`<span class="pill" style="color:var(--teal);border-color:rgba(20,184,166,.3)">⏱ ${tempo}d</span>`:""}
             ${a.FalsoZero?`<span class="pill" style="color:#C084FC;border-color:#A855F733">↩ ${a.FalsoZero}</span>`:""}
-            ${String(a.Fluxo)==="1"&&a.ArmadilhasInstaladas?`<span class="pill" style="color:var(--green3);border-color:#22C55E33">🪤 ${a.ArmadilhasRecolhidas||0}/${a.ArmadilhasInstaladas} recolhidas</span>`:""}
+            ${(String(a.Fluxo)==="1"||a.Fluxo===1)&&a.ArmadilhasInstaladas?`<span class="pill" style="color:var(--green3);border-color:#22C55E33">🪤 ${a.ArmadilhasRecolhidas||0}/${a.ArmadilhasInstaladas} recolhidas</span>`:""}
           </div>
-          ${String(a.Fluxo)==="1"&&a.ArmadilhasInstaladas&&parseInt(a.ArmadilhasInstaladas)>0?`
+          ${(String(a.Fluxo)==="1"||a.Fluxo===1||a.Fluxo==="1")&&a.ArmadilhasInstaladas&&parseInt(a.ArmadilhasInstaladas)>0?`
           <div style="margin-top:6px">
             <div style="display:flex;justify-content:space-between;margin-bottom:3px">
               <span style="font-size:10px;color:var(--text3)">🪤 Armadilhas: ${a.DataArmadilhamento||"—"} → ${a.DataRecolhimento||"pendente"}</span>
