@@ -9,7 +9,7 @@
   :root{
     --bg:#080F08;--panel:#0E180E;--card:#112011;--border:#1A301A;
     --green:#4ADE80;--greendk:#16A34A;--amber:#F59E0B;--red:#F87171;
-    --blue:#38BDF8;--purple:#C084FC;--teal:#2DD4BF;
+    --blue:#38BDF8;--purple:#C084FC;--teal:#2DD4BF;--orange:#FB923C;
     --text:#E2F0E2;--muted:#5A7A5A;--white:#F0FFF0;
   }
   body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;min-height:100vh;padding:16px}
@@ -22,106 +22,78 @@
   .btn-primary:hover{filter:brightness(1.15)}
   .btn-ghost{background:none;border:1px solid var(--border);color:var(--muted)}
   .btn-ghost:hover{border-color:var(--green);color:var(--white)}
-  .wrap{max-width:860px;margin:0 auto}
-  /* HEADER */
+  .btn-ghost.active{background:var(--greendk);color:var(--white);border-color:rgba(74,222,128,.4);font-weight:700}
+  .wrap{max-width:920px;margin:0 auto}
   .header{text-align:center;margin-bottom:22px}
   .logo-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(74,222,128,.07);
     border:1px solid rgba(74,222,128,.2);border-radius:12px;padding:7px 18px;margin-bottom:10px}
   .logo-text{color:var(--green);font-weight:800;letter-spacing:.08em;font-size:13px}
   .logo-sub{color:var(--muted);font-size:12px}
-  /* TABS */
   .tabs{display:flex;gap:6px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:5px;margin-bottom:22px}
-  .tab{flex:1;padding:9px 6px;border-radius:8px;border:1px solid transparent;
-    color:var(--muted);font-size:12px;font-weight:400;background:none;text-align:center}
+  .tab{flex:1;padding:9px 6px;border-radius:8px;border:1px solid transparent;color:var(--muted);font-size:12px;font-weight:400;background:none;text-align:center}
   .tab.active{background:var(--greendk);color:var(--white);font-weight:700;border-color:rgba(74,222,128,.3)}
-  /* CARDS */
   .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
-  .card-red{border-color:rgba(248,113,113,.3)}
-  .card-purple{border-color:rgba(192,132,252,.3)}
-  .card-amber{border-color:rgba(245,158,11,.3)}
-  /* KPI GRID */
   .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:18px}
   .kpi{background:var(--card);border-radius:12px;padding:12px 8px;text-align:center;border:1px solid var(--border)}
   .kpi-val{font-size:22px;font-weight:800;line-height:1.2}
   .kpi-label{font-size:10px;color:var(--muted);margin-top:3px}
   .kpi-icon{font-size:16px;margin-bottom:3px}
-  /* OPERADOR GRID */
   .op-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
   .op-card{background:var(--card);border-radius:12px;padding:14px}
-  .op-name{font-weight:700;font-size:13px;margin-bottom:8px}
-  .op-val{font-size:20px;font-weight:800;color:var(--white)}
-  .op-sub{font-size:11px;color:var(--muted);margin-bottom:8px}
-  /* BADGES */
-  .badge{display:inline-flex;align-items:center;gap:3px;border-radius:6px;
-    padding:2px 8px;font-size:11px;font-weight:700;white-space:nowrap}
+  .badge{display:inline-flex;align-items:center;gap:3px;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;white-space:nowrap}
   .pill{border-radius:6px;padding:2px 8px;font-size:11px;background:var(--border);color:var(--muted)}
-  /* AREA CARD */
-  .area-card{background:var(--card);border:1px solid var(--border);border-radius:12px;
-    padding:14px;margin-bottom:10px;cursor:pointer;transition:border .15s}
-  .area-card:hover{border-color:rgba(74,222,128,.3)}
+  .area-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer;transition:border .15s}
+  .area-card:hover{border-color:rgba(74,222,128,.35)}
+  .area-card.brd-red{border-color:rgba(248,113,113,.35)}
+  .area-card.brd-purple{border-color:rgba(192,132,252,.35)}
+  .area-card.brd-orange{border-color:rgba(251,146,60,.35)}
   .area-title{color:var(--white);font-weight:600;font-size:13px;line-height:1.3;flex:1}
+  .area-sub{color:var(--muted);font-size:11px;margin-top:2px}
   .area-meta{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 10px}
   .progress-bar{height:4px;background:var(--border);border-radius:4px;overflow:hidden}
   .progress-fill{height:100%;border-radius:4px;transition:width .4s}
   .obs{background:var(--panel);border-radius:6px;padding:6px 10px;font-size:11px;color:var(--muted);margin-top:6px}
-  /* FILTERS */
   .filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
-  .divider{width:1px;height:24px;background:var(--border)}
-  /* MODAL */
-  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:1000;
-    display:flex;align-items:center;justify-content:center;padding:16px}
-  .modal{background:var(--panel);border:1px solid var(--border);border-radius:14px;
-    padding:22px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto}
+  .divider-v{width:1px;height:24px;background:var(--border)}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
+  .modal{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
   .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
   .modal-title{color:var(--green);font-weight:700;font-size:15px}
   .close-btn{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0}
   .form-group{margin-bottom:14px}
   .form-label{color:var(--muted);font-size:11px;font-weight:600;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
-  /* ALERT */
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .alert{border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px}
   .alert-red{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--red)}
   .alert-green{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);color:var(--green)}
-  .alert-amber{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:var(--amber)}
-  /* CONFIG */
   .config-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px}
-  .config-title{color:var(--green);font-weight:700;font-size:14px;margin-bottom:10px}
-  /* TABLE */
+  .config-title{font-weight:700;font-size:14px;margin-bottom:10px}
+  .script-box{background:var(--bg);border-radius:8px;padding:12px;font-family:monospace;font-size:10.5px;color:#7DD3FC;line-height:1.6;overflow-x:auto;white-space:pre-wrap;max-height:220px;overflow-y:auto;border:1px solid var(--border)}
   table{width:100%;border-collapse:collapse;font-size:11px}
   th{padding:8px 10px;text-align:left;color:var(--green);border-bottom:1px solid var(--border);font-weight:700}
   td{padding:7px 10px;border-bottom:1px solid var(--border)}
   tr:last-child td{border-bottom:none}
   tr:nth-child(even){background:var(--bg)}
-  /* FOOTER */
-  .footer{margin-top:24px;text-align:center;color:var(--muted);font-size:11px;
-    border-top:1px solid var(--border);padding-top:14px}
-  /* EMPTY */
+  .footer{margin-top:24px;text-align:center;color:var(--muted);font-size:11px;border-top:1px solid var(--border);padding-top:14px}
   .empty{text-align:center;padding:32px;color:var(--muted)}
-  /* MONO */
-  .mono{font-family:monospace;font-size:11px}
-  /* RESPONSIVE */
-  @media(max-width:600px){
-    .kpi-grid{grid-template-columns:repeat(3,1fr)}
-    .op-grid{grid-template-columns:1fr}
-    .filters{gap:4px}
-  }
+  .fluxo-tag{border-radius:5px;padding:2px 7px;font-size:10px;font-weight:700}
+  .tempo-tag{border-radius:5px;padding:2px 7px;font-size:10px;background:rgba(45,212,191,.15);color:var(--teal)}
+  @media(max-width:600px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.op-grid{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="wrap">
-
-  <!-- HEADER -->
   <div class="header">
     <div class="logo-badge">
       <span>🚁</span>
       <span class="logo-text">DRONEFY</span>
       <span class="logo-sub">·</span>
-      <span class="logo-sub">MAPCANA</span>
+      <span class="logo-sub">VEJHO</span>
     </div>
     <h1>Painel de Controle Diário</h1>
     <div style="color:var(--muted);font-size:12px;margin-top:4px" id="data-hoje"></div>
   </div>
 
-  <!-- TABS -->
   <div class="tabs">
     <button class="tab active" onclick="window.setAba('painel')" id="tab-painel">📊 Painel</button>
     <button class="tab" onclick="window.setAba('config')" id="tab-config">⚙️ Configuração</button>
@@ -129,25 +101,22 @@
 
   <!-- ABA PAINEL -->
   <div id="aba-painel">
-    <div id="painel-desconectado" class="card card-amber" style="display:none;text-align:center;padding:32px">
+    <div id="painel-desconectado" class="card" style="display:none;text-align:center;padding:32px;border-color:rgba(245,158,11,.3)">
       <div style="font-size:32px;margin-bottom:12px">⚙️</div>
       <div style="color:var(--amber);font-weight:700;font-size:15px;margin-bottom:8px">Planilha não conectada</div>
       <div style="color:var(--muted);font-size:13px;margin-bottom:16px">Configure a URL do Google Sheets na aba Configuração.</div>
       <button class="btn-primary" onclick="window.setAba('config')">Ir para Configuração →</button>
     </div>
-
     <div id="painel-conteudo" style="display:none">
-      <!-- KPIs -->
       <div class="kpi-grid" id="kpis"></div>
-      <!-- Operadores -->
       <div class="op-grid" id="operadores"></div>
-      <!-- Filtros -->
       <div class="filters">
-        <button class="btn-ghost" id="f-todos" onclick="window.setFiltroFluxo(0)">Todos os Fluxos</button>
-        <button class="btn-ghost" id="f-f1" onclick="window.setFiltroFluxo(1)">Fluxo 1</button>
-        <button class="btn-ghost" id="f-f2" onclick="window.setFiltroFluxo(2)">Fluxo 2</button>
-        <div class="divider"></div>
-        <button class="btn-ghost" id="fs-todos" onclick="window.setFiltroStatus('todos')">Todos</button>
+        <button class="btn-ghost active" id="f-0" onclick="window.setFiltroFluxo(0)">Todos</button>
+        <button class="btn-ghost" id="f-1" onclick="window.setFiltroFluxo(1)">🔍 Fluxo 1</button>
+        <button class="btn-ghost" id="f-2" onclick="window.setFiltroFluxo(2)">🚁 Fluxo 2</button>
+        <button class="btn-ghost" id="f-3" onclick="window.setFiltroFluxo(3)">💰 Fluxo 3</button>
+        <div class="divider-v"></div>
+        <button class="btn-ghost active" id="fs-todos" onclick="window.setFiltroStatus('todos')">Todos</button>
         <button class="btn-ghost" id="fs-atraso" onclick="window.setFiltroStatus('atraso')">⚠ Atrasados</button>
         <button class="btn-ghost" id="fs-alerta" onclick="window.setFiltroStatus('alerta')">⚡ Atenção</button>
         <button class="btn-ghost" id="fs-ok" onclick="window.setFiltroStatus('ok')">✓ Em dia</button>
@@ -161,9 +130,9 @@
   <!-- ABA CONFIG -->
   <div id="aba-config" style="display:none">
     <div class="config-card">
-      <div class="config-title">🔌 Conectar ao Google Sheets</div>
+      <div class="config-title" style="color:var(--green)">🔌 Conectar ao Google Sheets</div>
       <div style="color:var(--text);font-size:13px;line-height:1.6;margin-bottom:14px">
-        Cole a URL do Web App gerado pelo Apps Script no passo anterior.
+        Cole a URL do Web App gerado pelo Apps Script.
       </div>
       <div class="form-group">
         <label class="form-label">URL do Web App (Apps Script)</label>
@@ -171,26 +140,56 @@
       </div>
       <div id="erro-config" class="alert alert-red" style="display:none"></div>
       <div id="ok-config" class="alert alert-green" style="display:none"></div>
-      <button class="btn-primary" style="width:100%;padding:12px" onclick="window.conectar()">
-        🔌 Conectar e Carregar Dados
-      </button>
+      <button class="btn-primary" style="width:100%;padding:12px" onclick="window.conectar()">🔌 Conectar e Carregar Dados</button>
     </div>
 
     <div class="config-card">
-      <div class="config-title" style="color:var(--amber)">📋 Estrutura da aba "Areas" no Sheets</div>
-      <table>
+      <div class="config-title" style="color:var(--amber)">📋 Nova estrutura da aba "Areas" no Sheets</div>
+      <p style="color:var(--muted);font-size:12px;margin-bottom:12px">Atualize sua planilha com os novos cabeçalhos na linha 1:</p>
+      <div class="script-box" style="color:var(--teal);font-size:12px;padding:10px 14px">ID | Produtor Rural | Fazenda | Colaborador | Fluxo | Etapa | Status | HA | Observacoes | FalsoZero | DataInicio | DataFim | TempoExecucao</div>
+      <table style="margin-top:14px">
         <thead><tr><th>Col</th><th>Nome exato</th><th>Exemplo</th><th>Preenchido por</th></tr></thead>
         <tbody id="tabela-estrutura"></tbody>
       </table>
     </div>
+
+    <!-- GERENCIAR COLABORADORES -->
+    <div class="config-card">
+      <div class="config-title" style="color:var(--purple)">👥 Colaboradores da Equipe</div>
+      <p style="color:var(--muted);font-size:12px;margin-bottom:14px">
+        Adicione ou remova colaboradores. Eles aparecem nos filtros, cards e no formulário de cadastro.
+      </p>
+      <div id="lista-colaboradores" style="margin-bottom:14px"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input id="novo-colab-nome" placeholder="Nome do colaborador" style="flex:1;min-width:140px"/>
+        <select id="novo-colab-cor" style="width:130px">
+          <option value="#4ADE80">🟢 Verde</option>
+          <option value="#F59E0B">🟡 Ambar</option>
+          <option value="#38BDF8">🔵 Azul</option>
+          <option value="#F87171">🔴 Vermelho</option>
+          <option value="#C084FC">🟣 Roxo</option>
+          <option value="#2DD4BF">🩵 Teal</option>
+          <option value="#FB923C">🟠 Laranja</option>
+          <option value="#F9A8D4">🩷 Rosa</option>
+        </select>
+        <button class="btn-primary" onclick="window.adicionarColab()" style="white-space:nowrap;padding:9px 14px">+ Adicionar</button>
+      </div>
+      <div id="ok-colab" class="alert alert-green" style="display:none;margin-top:10px"></div>
+    </div>
+
+    <div class="config-card">
+      <div class="config-title" style="color:var(--blue)">💻 Apps Script atualizado</div>
+      <p style="color:var(--muted);font-size:12px;margin-bottom:10px">Substitua o código no Apps Script por este:</p>
+      <div class="script-box" id="script-code"></div>
+    </div>
   </div>
 
-  <div class="footer">Dronefy · MAPCANA · Nanuque-MG · <span id="url-rodape" style="font-family:monospace"></span></div>
+  <div class="footer">Dronefy · VEJHO · Nanuque-MG</div>
 </div>
 
 <!-- MODAL -->
-<div class="modal-overlay" id="modal" style="display:none" onclick="window.fecharModal(event)">
-  <div class="modal" onclick="event.stopPropagation()">
+<div class="modal-overlay" id="modal" style="display:none" onclick="if(event.target===this)window.fecharModal()">
+  <div class="modal">
     <div class="modal-header">
       <span class="modal-title" id="modal-titulo">✏️ Editar Área</span>
       <button class="close-btn" onclick="window.fecharModal()">✕</button>
@@ -200,39 +199,194 @@
 </div>
 
 <script>
-// ─── CONFIGURAÇÃO ──────────────────────────────────────────────────
+// ─── CONSTANTES ────────────────────────────────────────────────────
 const ETAPAS_F1 = [
   "Planejamento Safra","Planejamento Semanal","Inserção EntomApp",
-  "Aviso Cliente (D-3)","Instalação Armadilhas","Relatório Instalação",
-  "Validação → Envio","Aguardando Recolhimento","Recolhimento/Contagem",
-  "Checagem/Índice","Validação Índice","Envio Relatório+Orçamento",
-  "Aguarda Autorização","Autorizado → Disparado",
+  "Aviso Cliente (D-3 a D-5)","Instalação Armadilhas","Relatório Instalação + MAPCANA",
+  "Validação → Envio Cliente","Aguardando Recolhimento","Recolhimento e Contagem",
+  "Checagem e Lançamento Índice","Validação Índice","Envio Relatório + Orçamento CB",
+  "Aguarda Autorização Cliente","Autorizado → Aciona Fluxo 2 e 3",
 ];
 const ETAPAS_F2 = [
-  "Planejamento Voo","Execução Operação","Lançamento Áreas",
-  "Geração Relatório","Validação → Envio Cliente","NF Emitida",
+  "Planejamento de Voo","Execução da Operação","Lançamento das Áreas",
+  "Geração do Relatório","Validação → Envio Cliente","Concluído",
 ];
-const RESP_COLORS = {Alyce:"#4ADE80",Wesley:"#F59E0B",Luiz:"#38BDF8",Andressa:"#F87171",Jovenildo:"#C084FC"};
-const STATUS = {
-  ok:    {label:"Em dia",    color:"#4ADE80",icon:"✓"},
-  alerta:{label:"Atenção",   color:"#F59E0B",icon:"⚠"},
-  atraso:{label:"Atrasado",  color:"#F87171",icon:"✕"},
-  falso: {label:"FalsoZero", color:"#C084FC",icon:"↩"},
-  aguard:{label:"Aguardando",color:"#38BDF8",icon:"⏳"},
+const ETAPAS_F3 = [
+  "Autorização Recebida","NF Solicitada ao Faturamento","NF Emitida",
+  "Boleto Gerado","Boleto Enviado ao Cliente","Aguarda Pagamento",
+  "Pagamento Confirmado / Recebido",
+];
+
+const FLUXO_INFO = {
+  1:{label:"Fluxo 1 — Monitoramento", color:"#4ADE80", icon:"🔍"},
+  2:{label:"Fluxo 2 — Aplicação",     color:"#F59E0B", icon:"🚁"},
+  3:{label:"Fluxo 3 — Faturamento",   color:"#FB923C", icon:"💰"},
 };
-const ESTRUTURA = [
-  ["A","ID","1","Sistema"],
-  ["B","Fazenda","Winnfried Jordan","Alyce/Campo"],
-  ["C","Responsavel","Wesley","Alyce"],
-  ["D","Fluxo","1 ou 2","Alyce"],
-  ["E","Etapa","7","Wesley/Luiz/Alyce"],
-  ["F","Status","ok/alerta/atraso/falso/aguard","Alyce"],
-  ["G","HA","1152","Alyce"],
-  ["H","Observacoes","Aguardando cliente","Qualquer"],
-  ["I","FalsoZero","true ou false","Alyce"],
-  ["J","DataInicio","2026-04-14","Alyce"],
-  ["K","Prazo","2026-04-28","Alyce"],
+// ─── COLABORADORES DINÂMICOS ───────────────────────────────────────
+const COLABS_DEFAULT = [
+  {nome:"Wesley",   cor:"#F59E0B"},
+  {nome:"Luiz",     cor:"#38BDF8"},
+  {nome:"Alyce",    cor:"#4ADE80"},
+  {nome:"Andressa", cor:"#F87171"},
+  {nome:"Jovenildo",cor:"#C084FC"},
 ];
+
+function getColabs() {
+  try {
+    const s = localStorage.getItem("dronefy-colabs");
+    return s ? JSON.parse(s) : COLABS_DEFAULT;
+  } catch { return COLABS_DEFAULT; }
+}
+function salvarColabs(list) {
+  localStorage.setItem("dronefy-colabs", JSON.stringify(list));
+}
+function getCorColab(nome) {
+  const c = getColabs().find(c => c.nome === nome);
+  return c ? c.cor : "#5A7A5A";
+}
+function getNomesColabs() {
+  return getColabs().map(c => c.nome);
+}
+
+function renderListaColabs() {
+  const list = getColabs();
+  const el = document.getElementById("lista-colaboradores");
+  if (!el) return;
+  if (!list.length) {
+    el.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:8px">Nenhum colaborador cadastrado.</div>`;
+    return;
+  }
+  el.innerHTML = list.map((c, i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;
+      background:var(--bg);border-radius:8px;margin-bottom:6px;border:1px solid ${c.cor}33">
+      <div style="width:14px;height:14px;border-radius:50%;background:${c.cor};flex-shrink:0"></div>
+      <span style="color:var(--white);font-size:13px;font-weight:600;flex:1">${c.nome}</span>
+      <button onclick="window.editarCorColab(${i})"
+        style="background:none;border:1px solid var(--border);border-radius:6px;
+        padding:3px 8px;color:var(--muted);font-size:11px;cursor:pointer">
+        ✏️ Cor
+      </button>
+      <button onclick="window.removerColab(${i})"
+        style="background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);
+        border-radius:6px;padding:3px 8px;color:#F87171;font-size:11px;cursor:pointer">
+        ✕ Remover
+      </button>
+    </div>`).join("");
+}
+
+window.adicionarColab = function() {
+  const nome = document.getElementById("novo-colab-nome").value.trim();
+  const cor  = document.getElementById("novo-colab-cor").value;
+  if (!nome) return;
+  const list = getColabs();
+  if (list.find(c => c.nome.toLowerCase() === nome.toLowerCase())) {
+    const ok = document.getElementById("ok-colab");
+    ok.textContent = "Colaborador já existe.";
+    ok.style.background = "rgba(248,113,113,.1)";
+    ok.style.borderColor = "rgba(248,113,113,.3)";
+    ok.style.color = "#F87171";
+    ok.style.display = "block";
+    setTimeout(() => ok.style.display="none", 2000);
+    return;
+  }
+  list.push({nome, cor});
+  salvarColabs(list);
+  document.getElementById("novo-colab-nome").value = "";
+  renderListaColabs();
+  renderOperadores();
+  const ok = document.getElementById("ok-colab");
+  ok.textContent = `✓ ${nome} adicionado com sucesso.`;
+  ok.style.background = ""; ok.style.borderColor = ""; ok.style.color = "";
+  ok.style.display = "block";
+  setTimeout(() => ok.style.display="none", 2000);
+};
+
+window.removerColab = function(idx) {
+  const list = getColabs();
+  const nome = list[idx].nome;
+  if (!confirm(`Remover ${nome} da equipe?`)) return;
+  list.splice(idx, 1);
+  salvarColabs(list);
+  renderListaColabs();
+  renderOperadores();
+};
+
+window.editarCorColab = function(idx) {
+  const list = getColabs();
+  const cores = ["#4ADE80","#F59E0B","#38BDF8","#F87171","#C084FC","#2DD4BF","#FB923C","#F9A8D4"];
+  const nomeCores = ["Verde","Ambar","Azul","Vermelho","Roxo","Teal","Laranja","Rosa"];
+  const nova = prompt(`Nova cor para ${list[idx].nome}:
+${cores.map((c,i)=>i+1+". "+nomeCores[i]).join("\n")}
+Digite o número:`);
+  const n = parseInt(nova);
+  if (n >= 1 && n <= cores.length) {
+    list[idx].cor = cores[n-1];
+    salvarColabs(list);
+    renderListaColabs();
+    renderOperadores();
+  }
+};
+const STATUS_CFG = {
+  ok:    {label:"Em dia",    color:"#4ADE80", icon:"✓"},
+  alerta:{label:"Atenção",   color:"#F59E0B", icon:"⚠"},
+  atraso:{label:"Atrasado",  color:"#F87171", icon:"✕"},
+  falso: {label:"FalsoZero", color:"#C084FC", icon:"↩"},
+  aguard:{label:"Aguardando",color:"#38BDF8", icon:"⏳"},
+  pago:  {label:"Recebido",  color:"#2DD4BF", icon:"💚"},
+};
+
+const ESTRUTURA_COLS = [
+  ["A","ID","1","Sistema (auto)"],
+  ["B","Produtor Rural","João da Silva","Alyce"],
+  ["C","Fazenda","Fazenda Boa Vista","Alyce/Campo"],
+  ["D","Colaborador","Wesley","Alyce"],
+  ["E","Fluxo","1, 2 ou 3","Alyce"],
+  ["F","Etapa","7","Wesley/Luiz/Andressa/Alyce"],
+  ["G","Status","ok/alerta/atraso/falso/aguard/pago","Alyce"],
+  ["H","HA","1152","Alyce"],
+  ["I","Observacoes","Aguardando cliente","Qualquer"],
+  ["J","FalsoZero","Fazenda X - 150ha (ou vazio)","Alyce"],
+  ["K","DataInicio","2026-04-14","Alyce"],
+  ["L","DataFim","2026-04-28","Alyce"],
+  ["M","TempoExecucao","=L2-K2 (dias automático)","Sheets (fórmula)"],
+];
+
+const APPS_SCRIPT = `function doGet(e) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet()
+    .getSheetByName("Areas");
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const rows = data.slice(1).filter(r => r[0]).map(r => {
+    const obj = {};
+    headers.forEach((h, i) => { obj[h] = r[i]; });
+    return obj;
+  });
+  return ContentService
+    .createTextOutput(JSON.stringify({ ok: true, data: rows }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet()
+    .getSheetByName("Areas");
+  const payload = JSON.parse(e.postData.contents);
+  if (payload.action === "update") {
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === String(payload.id)) {
+        sheet.getRange(i+1, 1, 1, payload.row.length)
+          .setValues([payload.row]);
+        break;
+      }
+    }
+  }
+  if (payload.action === "add") {
+    sheet.appendRow(payload.row);
+  }
+  return ContentService
+    .createTextOutput(JSON.stringify({ ok: true }))
+    .setMimeType(ContentService.MimeType.JSON);
+}`;
 
 // ─── ESTADO ────────────────────────────────────────────────────────
 let scriptUrl = localStorage.getItem("dronefy-url") || "";
@@ -240,23 +394,24 @@ let areas = [];
 let filtroFluxo = 0;
 let filtroStatus = "todos";
 
-window.setAba=setAba;
-window.conectar=conectar;
-window.carregarDados=carregarDados;
-window.setFiltroFluxo=setFiltroFluxo;
-window.setFiltroStatus=setFiltroStatus;
-window.abrirModal=abrirModal;
-window.salvarEdicao=salvarEdicao;
-window.fecharModal=fecharModal;
+// ─── EXPOR FUNÇÕES AO WINDOW ───────────────────────────────────────
+window.setAba = setAba;
+window.conectar = conectar;
+window.carregarDados = carregarDados;
+window.setFiltroFluxo = setFiltroFluxo;
+window.setFiltroStatus = setFiltroStatus;
+window.abrirModal = abrirModal;
+window.salvarEdicao = salvarEdicao;
+window.fecharModal = fecharModal;
+
 // ─── INIT ──────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
-  // Data
   const hoje = new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});
   document.getElementById("data-hoje").textContent = hoje.charAt(0).toUpperCase()+hoje.slice(1);
 
-  // Estrutura tabela
+  // Tabela estrutura
   const tbody = document.getElementById("tabela-estrutura");
-  ESTRUTURA.forEach(([col,nome,ex,resp],i) => {
+  ESTRUTURA_COLS.forEach(([col,nome,ex,resp],i) => {
     tbody.innerHTML += `<tr>
       <td style="color:#2DD4BF;font-family:monospace;font-weight:700">${col}</td>
       <td style="color:#F0FFF0;font-weight:600">${nome}</td>
@@ -265,16 +420,15 @@ document.addEventListener("DOMContentLoaded", () => {
     </tr>`;
   });
 
-  // URL salva
+  // Apps Script
+  document.getElementById("script-code").textContent = APPS_SCRIPT;
+
   if (scriptUrl) {
     document.getElementById("url-input").value = scriptUrl;
-    document.getElementById("url-rodape").textContent = scriptUrl.substring(0,60)+"...";
     carregarDados();
   } else {
     document.getElementById("painel-desconectado").style.display = "block";
   }
-
-  renderFiltros();
 });
 
 // ─── ABAS ──────────────────────────────────────────────────────────
@@ -284,8 +438,8 @@ function setAba(aba) {
     if (el) el.style.display = id===aba ? "block" : "none";
   });
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-  const tabEl = document.getElementById("tab-"+aba);
-  if (tabEl) tabEl.classList.add("active");
+  const t = document.getElementById("tab-"+aba);
+  if (t) t.classList.add("active");
 }
 
 // ─── CONEXÃO ───────────────────────────────────────────────────────
@@ -302,13 +456,12 @@ async function conectar() {
     if (json.ok !== undefined) {
       scriptUrl = url;
       localStorage.setItem("dronefy-url", url);
-      document.getElementById("url-rodape").textContent = url.substring(0,60)+"...";
       areas = json.data || [];
       okEl.textContent = `✓ Conectado! ${areas.length} área(s) carregada(s).`;
       renderPainel();
-      setTimeout(() => setAba("painel"), 1200);
-    } else { throw new Error("Resposta inválida"); }
-  } catch(e) {
+      setTimeout(() => setAba("painel"), 1000);
+    } else { throw new Error(); }
+  } catch {
     erroEl.textContent = "Não foi possível conectar. Verifique a URL e se o Web App está publicado como público.";
     erroEl.style.display="block"; okEl.style.display="none";
   }
@@ -320,7 +473,7 @@ async function carregarDados() {
     const res = await fetch(scriptUrl);
     const json = await res.json();
     if (json.ok !== undefined) { areas = json.data || []; renderPainel(); }
-  } catch(e) { console.warn("Erro ao recarregar:", e); }
+  } catch {}
 }
 
 // ─── RENDER PAINEL ─────────────────────────────────────────────────
@@ -335,11 +488,11 @@ function renderPainel() {
 function renderKPIs() {
   const totalHa = areas.reduce((s,a)=>s+(parseFloat(a.HA)||0),0);
   const kpis = [
-    {icon:"📋",val:areas.length,label:"Áreas Ativas",color:"#38BDF8"},
-    {icon:"🌾",val:totalHa.toLocaleString("pt-BR"),label:"Total ha",color:"#2DD4BF"},
-    {icon:"⚠️",val:areas.filter(a=>a.Status==="atraso").length,label:"Atrasadas",color:"#F87171"},
-    {icon:"⚡",val:areas.filter(a=>a.Status==="alerta").length,label:"Atenção",color:"#F59E0B"},
-    {icon:"↩️",val:areas.filter(a=>String(a.FalsoZero)==="true").length,label:"FalsoZero",color:"#C084FC"},
+    {icon:"📋", val:areas.length,                                    label:"Áreas Ativas",  color:"#38BDF8"},
+    {icon:"🌾", val:totalHa.toLocaleString("pt-BR"),                 label:"Total ha",      color:"#2DD4BF"},
+    {icon:"⚠️", val:areas.filter(a=>a.Status==="atraso").length,     label:"Atrasadas",     color:"#F87171"},
+    {icon:"⚡", val:areas.filter(a=>a.Status==="alerta").length,     label:"Atenção",       color:"#F59E0B"},
+    {icon:"💰", val:areas.filter(a=>a.Fluxo==="3"||a.Fluxo===3).length, label:"Faturamento",color:"#FB923C"},
   ];
   document.getElementById("kpis").innerHTML = kpis.map(k=>`
     <div class="kpi" style="border-color:${k.color}22">
@@ -350,23 +503,35 @@ function renderKPIs() {
 }
 
 function renderOperadores() {
-  const ops = ["Wesley","Luiz","Alyce"];
-  document.getElementById("operadores").innerHTML = ops.map(nome => {
-    const mine = areas.filter(a=>a.Responsavel===nome);
+  getColabs().slice(0,3).map(c=>c.nome).forEach((nome, idx) => {
+    const mine = areas.filter(a=>a.Colaborador===nome);
     const ha = mine.reduce((s,a)=>s+(parseFloat(a.HA)||0),0);
     const atr = mine.filter(a=>a.Status==="atraso").length;
     const alt = mine.filter(a=>a.Status==="alerta").length;
-    const cor = RESP_COLORS[nome]||"#5A7A5A";
-    const tags = atr>0 ? `<span style="background:rgba(248,113,113,.15);border-radius:5px;padding:2px 6px;font-size:10px;color:#F87171">⚠ ${atr} atras.</span>` : "";
-    const tags2 = alt>0 ? `<span style="background:rgba(245,158,11,.15);border-radius:5px;padding:2px 6px;font-size:10px;color:#F59E0B;margin-left:4px">⚡ ${alt}</span>` : "";
-    const ok = atr===0&&alt===0 ? `<span style="background:rgba(74,222,128,.15);border-radius:5px;padding:2px 6px;font-size:10px;color:#4ADE80">✓ Em dia</span>` : "";
-    return `<div class="op-card" style="border:1px solid ${cor}33">
-      <div class="op-name" style="color:${cor}">🚁 ${nome}</div>
-      <div class="op-val">${mine.length}</div>
-      <div class="op-sub">áreas · ${ha.toLocaleString("pt-BR")} ha</div>
-      <div>${tags}${tags2}${ok}</div>
-    </div>`;
-  }).join("");
+    const cor = getCorColab(nome);
+    const tags = [
+      atr>0 ? `<span style="background:rgba(248,113,113,.15);border-radius:5px;padding:2px 6px;font-size:10px;color:#F87171">⚠ ${atr} atras.</span>` : "",
+      alt>0 ? `<span style="background:rgba(245,158,11,.15);border-radius:5px;padding:2px 6px;font-size:10px;color:#F59E0B;margin-left:4px">⚡ ${alt}</span>` : "",
+      atr===0&&alt===0 ? `<span style="background:rgba(74,222,128,.15);border-radius:5px;padding:2px 6px;font-size:10px;color:#4ADE80">✓ Em dia</span>` : "",
+    ].join("");
+    document.getElementById("operadores").children[idx].innerHTML = `
+      <div style="color:${cor};font-weight:700;font-size:13px;margin-bottom:8px">🚁 ${nome}</div>
+      <div style="color:#F0FFF0;font-size:20px;font-weight:800">${mine.length}</div>
+      <div style="color:#5A7A5A;font-size:11px;margin-bottom:8px">áreas · ${ha.toLocaleString("pt-BR")} ha</div>
+      <div>${tags}</div>`;
+  });
+}
+
+function getEtapas(fluxo) {
+  const f = parseInt(fluxo);
+  return f===1 ? ETAPAS_F1 : f===2 ? ETAPAS_F2 : ETAPAS_F3;
+}
+
+function calcTempo(dataInicio, dataFim) {
+  if (!dataInicio || !dataFim) return null;
+  const d1 = new Date(dataInicio), d2 = new Date(dataFim);
+  if (isNaN(d1)||isNaN(d2)) return null;
+  return Math.ceil((d2-d1)/86400000);
 }
 
 function renderAreas() {
@@ -375,7 +540,7 @@ function renderAreas() {
     if (filtroStatus!=="todos" && a.Status!==filtroStatus) return false;
     return true;
   }).sort((a,b) => {
-    const ord={atraso:0,alerta:1,falso:2,aguard:3,ok:4};
+    const ord={atraso:0,alerta:1,falso:2,aguard:3,ok:4,pago:5};
     return (ord[a.Status]||5)-(ord[b.Status]||5);
   });
 
@@ -387,34 +552,42 @@ function renderAreas() {
   }
 
   document.getElementById("lista-areas").innerHTML = filtradas.map(a => {
-    const etapas = String(a.Fluxo)==="1" ? ETAPAS_F1 : ETAPAS_F2;
+    const etapas = getEtapas(a.Fluxo);
     const etapa = parseInt(a.Etapa)||1;
     const prog = Math.round((etapa/etapas.length)*100);
-    const st = STATUS[a.Status]||STATUS.ok;
-    const rc = RESP_COLORS[a.Responsavel]||"#5A7A5A";
-    const prazoDate = a.Prazo ? new Date(a.Prazo) : null;
-    const diasR = prazoDate ? Math.ceil((prazoDate-new Date())/(86400000)) : null;
+    const st = STATUS_CFG[a.Status]||STATUS_CFG.ok;
+    const fi = FLUXO_INFO[parseInt(a.Fluxo)]||FLUXO_INFO[1];
+    const rc = getCorColab(a.Colaborador);
+    const prazoDate = a.DataFim ? new Date(a.DataFim) : null;
+    const diasR = prazoDate ? Math.ceil((prazoDate-new Date())/86400000) : null;
     const prazoColor = diasR===null?"#5A7A5A":diasR<0?"#F87171":diasR<=2?"#F59E0B":"#5A7A5A";
-    const prazoTxt = diasR===null?"":diasR<0?`${Math.abs(diasR)}d atrasado`:diasR===0?"Hoje!":`${diasR}d`;
-    const falsoTag = String(a.FalsoZero)==="true" ? `<span style="background:rgba(192,132,252,.15);border:1px solid rgba(192,132,252,.3);border-radius:6px;padding:2px 8px;font-size:11px;color:#C084FC">↩ FalsoZero</span>` : "";
-    const fillColor = a.Status==="atraso"?"#F87171":a.Status==="alerta"?"#F59E0B":a.Status==="falso"?"#C084FC":"#4ADE80";
-    const borderClass = a.Status==="atraso"?"card-red":a.Status==="falso"?"card-purple":"";
+    const prazoTxt = diasR===null ? "" : diasR<0 ? `${Math.abs(diasR)}d atrasado` : diasR===0 ? "Hoje!" : `${diasR}d`;
+    const tempo = calcTempo(a.DataInicio, a.DataFim);
+    const fillColor = a.Status==="atraso"?"#F87171":a.Status==="alerta"?"#F59E0B":a.Status==="falso"?"#C084FC":a.Status==="pago"?"#2DD4BF":"#4ADE80";
+    const brd = a.Status==="atraso"?"brd-red":a.Status==="falso"?"brd-purple":String(a.Fluxo)==="3"?"brd-orange":"";
+    const falsoTag = a.FalsoZero ? `<span style="background:rgba(192,132,252,.15);border:1px solid rgba(192,132,252,.3);border-radius:6px;padding:2px 8px;font-size:11px;color:#C084FC">↩ ${a.FalsoZero}</span>` : "";
     const obsHtml = a.Observacoes ? `<div class="obs">💬 ${a.Observacoes}</div>` : "";
+    const encoded = encodeURIComponent(JSON.stringify(a));
 
-    return `<div class="area-card ${borderClass}" onclick="window.abrirModal('${encodeURIComponent(JSON.stringify(a))}')">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px">
-        <span class="area-title">${a.Fazenda||"—"}</span>
+    return `<div class="area-card ${brd}" onclick="window.abrirModal('${encoded}')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px">
+        <div style="flex:1">
+          <div class="area-title">${a.Fazenda||"—"}</div>
+          <div class="area-sub">${a["Produtor Rural"]||""}</div>
+        </div>
         <span class="badge" style="background:${st.color}18;border:1px solid ${st.color}40;color:${st.color}">${st.icon} ${st.label}</span>
       </div>
       <div class="area-meta">
-        <span class="badge" style="background:${rc}20;border:1px solid ${rc}40;color:${rc}">${a.Responsavel||"—"}</span>
+        <span class="fluxo-tag" style="background:${fi.color}18;color:${fi.color};border:1px solid ${fi.color}33">${fi.icon} F${a.Fluxo||1}</span>
+        <span class="badge" style="background:${rc}20;border:1px solid ${rc}40;color:${rc}">${a.Colaborador||"—"}</span>
         <span class="pill">${a.HA||0} ha</span>
-        ${prazoTxt?`<span class="pill" style="color:${prazoColor}">${prazoTxt}</span>`:""}
+        ${prazoTxt ? `<span class="pill" style="color:${prazoColor}">${prazoTxt}</span>` : ""}
+        ${tempo!==null ? `<span class="tempo-tag">⏱ ${tempo}d</span>` : ""}
         ${falsoTag}
       </div>
-      <div style="margin-bottom:6px">
+      <div>
         <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-          <span style="color:var(--muted);font-size:11px">${etapa}/${etapas.length} — ${etapas[etapa-1]||"—"}</span>
+          <span style="color:#5A7A5A;font-size:11px">${etapa}/${etapas.length} — ${etapas[etapa-1]||"—"}</span>
           <span style="color:#4ADE80;font-size:11px;font-weight:600">${prog}%</span>
         </div>
         <div class="progress-bar"><div class="progress-fill" style="width:${prog}%;background:${fillColor}"></div></div>
@@ -427,100 +600,153 @@ function renderAreas() {
 // ─── FILTROS ───────────────────────────────────────────────────────
 function setFiltroFluxo(v) {
   filtroFluxo = v;
-  renderFiltros();
+  [0,1,2,3].forEach(i => {
+    const el = document.getElementById("f-"+i);
+    if (el) el.classList.toggle("active", filtroFluxo===i);
+  });
   renderAreas();
 }
 function setFiltroStatus(v) {
   filtroStatus = v;
-  renderFiltros();
+  ["todos","atraso","alerta","ok"].forEach(s => {
+    const el = document.getElementById("fs-"+s);
+    if (el) el.classList.toggle("active", filtroStatus===s);
+  });
   renderAreas();
-}
-function renderFiltros() {
-  ["f-todos","f-f1","f-f2"].forEach((id,i) => {
-    document.getElementById(id)?.classList.toggle("active", filtroFluxo===[0,1,2][i]);
-  });
-  ["fs-todos","fs-atraso","fs-alerta","fs-ok"].forEach((id,i) => {
-    document.getElementById(id)?.classList.toggle("active", filtroStatus===["todos","atraso","alerta","ok"][i]);
-  });
 }
 
 // ─── MODAL ─────────────────────────────────────────────────────────
-function abrirModal(encodedArea) {
-  const area = JSON.parse(decodeURIComponent(encodedArea));
-  const etapas = String(area.Fluxo)==="1" ? ETAPAS_F1 : ETAPAS_F2;
-  document.getElementById("modal-titulo").textContent = `✏️ ${area.Fazenda}`;
-
+function abrirModal(encoded) {
+  const a = JSON.parse(decodeURIComponent(encoded));
+  const etapas = getEtapas(a.Fluxo);
+  document.getElementById("modal-titulo").textContent = `✏️ ${a.Fazenda||"Área"}`;
   document.getElementById("modal-corpo").innerHTML = `
-    <div class="form-group">
-      <label class="form-label">Etapa Atual</label>
-      <select id="m-etapa">${etapas.map((e,i)=>`<option value="${i+1}" ${parseInt(area.Etapa)===i+1?"selected":""}>${i+1}. ${e}</option>`).join("")}</select>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Produtor Rural</label>
+        <input id="m-produtor" value="${a["Produtor Rural"]||""}"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fazenda</label>
+        <input id="m-fazenda" value="${a.Fazenda||""}"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Colaborador</label>
+        <select id="m-colaborador">
+          ${getNomesColabs().map(r=>`<option ${a.Colaborador===r?"selected":""}>${r}</option>`).join("")}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">HA</label>
+        <input type="number" id="m-ha" value="${a.HA||""}"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Fluxo</label>
+        <select id="m-fluxo" onchange="window.atualizarEtapasModal(this.value)">
+          <option value="1" ${String(a.Fluxo)==="1"?"selected":""}>Fluxo 1 — Monitoramento</option>
+          <option value="2" ${String(a.Fluxo)==="2"?"selected":""}>Fluxo 2 — Aplicação</option>
+          <option value="3" ${String(a.Fluxo)==="3"?"selected":""}>Fluxo 3 — Faturamento</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Etapa Atual</label>
+        <select id="m-etapa">
+          ${etapas.map((e,i)=>`<option value="${i+1}" ${parseInt(a.Etapa)===i+1?"selected":""}>${i+1}. ${e}</option>`).join("")}
+        </select>
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label">Status</label>
-      <select id="m-status">${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${area.Status===k?"selected":""}>${v.icon} ${v.label}</option>`).join("")}</select>
+      <select id="m-status">
+        ${Object.entries(STATUS_CFG).map(([k,v])=>`<option value="${k}" ${a.Status===k?"selected":""}>${v.icon} ${v.label}</option>`).join("")}
+      </select>
     </div>
     <div class="form-group">
       <label class="form-label">Observações</label>
-      <textarea id="m-obs" rows="3">${area.Observacoes||""}</textarea>
+      <textarea id="m-obs" rows="2">${a.Observacoes||""}</textarea>
     </div>
     <div class="form-group">
-      <label class="form-label">Prazo</label>
-      <input type="date" id="m-prazo" value="${area.Prazo||""}"/>
+      <label class="form-label">FalsoZero (Fazenda e Ha afetados)</label>
+      <input id="m-falso" placeholder="Ex: Fazenda Boa Vista - 150ha (deixe vazio se não houver)" value="${a.FalsoZero||""}"/>
     </div>
-    <div class="form-group" style="display:flex;align-items:center;gap:8px">
-      <input type="checkbox" id="m-falso" ${String(area.FalsoZero)==="true"?"checked":""} style="width:auto"/>
-      <label for="m-falso" style="color:var(--muted);font-size:13px;cursor:pointer">FalsoZero — aguardando remonitoramento (10–15 dias)</label>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Data Início</label>
+        <input type="date" id="m-inicio" value="${a.DataInicio||""}"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data Fim / Prazo</label>
+        <input type="date" id="m-fim" value="${a.DataFim||""}"/>
+      </div>
     </div>
     <div style="display:flex;gap:8px;margin-top:18px">
       <button class="btn-ghost" style="flex:1" onclick="window.fecharModal()">Cancelar</button>
-      <button class="btn-primary" style="flex:2" onclick="window.salvarEdicao('${encodeURIComponent(JSON.stringify(area))}')">✓ Salvar no Sheets</button>
+      <button class="btn-primary" style="flex:2" onclick="window.salvarEdicao('${encoded}')">✓ Salvar no Sheets</button>
     </div>
     <div id="modal-erro" class="alert alert-red" style="display:none;margin-top:10px"></div>
-    <div id="modal-ok" class="alert alert-green" style="display:none;margin-top:10px"></div>
-  `;
-
+    <div id="modal-ok" class="alert alert-green" style="display:none;margin-top:10px"></div>`;
   document.getElementById("modal").style.display = "flex";
 }
 
-async function salvarEdicao(encodedArea) {
-  const area = JSON.parse(decodeURIComponent(encodedArea));
+window.atualizarEtapasModal = function(fluxo) {
+  const etapas = getEtapas(fluxo);
+  const sel = document.getElementById("m-etapa");
+  sel.innerHTML = etapas.map((e,i)=>`<option value="${i+1}">${i+1}. ${e}</option>`).join("");
+};
+
+async function salvarEdicao(encoded) {
+  const a = JSON.parse(decodeURIComponent(encoded));
   const erroEl = document.getElementById("modal-erro");
   const okEl = document.getElementById("modal-ok");
   erroEl.style.display="none"; okEl.style.display="none";
-
-  const novaEtapa = document.getElementById("m-etapa").value;
-  const novoStatus = document.getElementById("m-status").value;
-  const novaObs = document.getElementById("m-obs").value;
-  const novoPrazo = document.getElementById("m-prazo").value;
-  const novoFalso = document.getElementById("m-falso").checked;
-
+  const inicio = document.getElementById("m-inicio").value;
+  const fim = document.getElementById("m-fim").value;
+  const tempo = calcTempo(inicio, fim);
   const row = [
-    area.ID, area.Fazenda, area.Responsavel, area.Fluxo,
-    novaEtapa, novoStatus, area.HA, novaObs,
-    novoFalso, area.DataInicio, novoPrazo
+    a.ID,
+    document.getElementById("m-produtor").value,
+    document.getElementById("m-fazenda").value,
+    document.getElementById("m-colaborador").value,
+    document.getElementById("m-fluxo").value,
+    document.getElementById("m-etapa").value,
+    document.getElementById("m-status").value,
+    document.getElementById("m-ha").value,
+    document.getElementById("m-obs").value,
+    document.getElementById("m-falso").value,
+    inicio, fim,
+    tempo !== null ? tempo : "",
   ];
-
   okEl.textContent = "Salvando..."; okEl.style.display="block";
-
   try {
     await fetch(scriptUrl, {
       method:"POST", mode:"no-cors",
       headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({action:"update", id:area.ID, row})
+      body: JSON.stringify({action:"update", id:a.ID, row})
     });
     okEl.textContent = "✓ Salvo! Atualizando painel...";
     setTimeout(() => { fecharModal(); carregarDados(); }, 1000);
-  } catch(e) {
-    erroEl.textContent = "Erro ao salvar. Tente editar direto na planilha.";
+  } catch {
+    erroEl.textContent = "Erro ao salvar. Edite diretamente na planilha.";
     erroEl.style.display="block"; okEl.style.display="none";
   }
 }
 
-function fecharModal(e) {
-  if (!e || e.target===document.getElementById("modal")) {
-    document.getElementById("modal").style.display="none";
-  }
+function fecharModal() {
+  document.getElementById("modal").style.display = "none";
 }
+
+// ─── INIT OPERADORES (containers vazios) ──────────────────────────
+document.addEventListener("DOMContentLoaded", () => {
+  const op = document.getElementById("operadores");
+  op.innerHTML = ["Wesley","Luiz","Andressa"].map(nome => {
+    const cor = getCorColab(nome);
+    return `<div class="op-card" style="border:1px solid ${cor}33"></div>`;
+  }).join("");
+});
 </script>
 </body>
 </html>
