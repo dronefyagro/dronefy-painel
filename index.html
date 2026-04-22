@@ -1638,7 +1638,7 @@ window.trocarSenha=function(){
 const TV_ABAS = ["painel","rotas","agenda"];
 const TV_LABELS = {painel:"Painel",rotas:"Rotas",agenda:"Agenda"};
 let tvAtivo = false;
-let tvIntervalo = 30; // segundos por aba (configurável)
+let tvIntervalo = 60; // segundos por aba (configurável)
 let tvAbaIdx = 0;
 let tvTimer = null;
 let tvCountTimer = null;
@@ -1650,7 +1650,7 @@ function iniciarModoTV(){
   if(!params.has("tv")) return;
 
   tvAtivo = true;
-  tvIntervalo = parseInt(params.get("tv"))||30;
+  tvIntervalo = parseInt(params.get("tv"))||60;
   document.body.classList.add("tv-mode");
 
   // Wake lock — impede a tela de apagar
