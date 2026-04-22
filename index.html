@@ -271,10 +271,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // ─── ABAS ──────────────────────────────────────────────────────────
 function setAba(aba) {
-  document.getElementById("aba-painel").style.display = aba==="painel"?"block":"none";
-  document.getElementById("aba-config").style.display = aba==="config"?"block":"none";
+  ["painel","config"].forEach(id => {
+    const el = document.getElementById("aba-"+id);
+    if (el) el.style.display = id===aba ? "block" : "none";
+  });
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-  document.getElementById("tab-"+aba).classList.add("active");
+  const tabEl = document.getElementById("tab-"+aba);
+  if (tabEl) tabEl.classList.add("active");
 }
 
 // ─── CONEXÃO ───────────────────────────────────────────────────────
