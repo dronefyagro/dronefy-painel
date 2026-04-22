@@ -309,7 +309,7 @@ button:active{transform:scale(.97)}
 
     <!-- Equipe -->
     <div class="section-header">
-      <div class="section-title">Equipe </div>
+      <div class="section-title">Equipe em Campo</div>
       <span style="font-size:11px;color:var(--text3)" id="equipe-total"></span>
     </div>
     <div class="team-grid" id="team-grid"></div>
@@ -401,7 +401,7 @@ button:active{transform:scale(.97)}
     <!-- Estrutura -->
     <div class="config-section">
       <div class="config-title" style="color:var(--amber)">📋 Estrutura da planilha</div>
-      <div class="script-box" style="color:var(--teal);font-size:12px;margin-bottom:12px">ID | Produtor Rural | Fazenda | Colaborador | Fluxo | Etapa | Status | HA | Observacoes | FalsoZero | DataInicio | DataFim | TempoExecucao</div>
+      <div class="script-box" style="color:var(--teal);font-size:12px;margin-bottom:12px">ID | Produtor Rural | Fazenda | Colaborador | Fluxo | Etapa | Status | HA | Observacoes | FalsoZero | DataInicio | DataFim | TempoExecucao | ArmadilhasInstaladas | DataArmadilhamento | ArmadilhasRecolhidas | DataRecolhimento</div>
       <table class="struct-table"><thead><tr><th>Col</th><th>Nome</th><th>Exemplo</th><th>Por quem</th></tr></thead>
       <tbody id="tabela-estrutura"></tbody></table>
     </div>
@@ -547,6 +547,10 @@ const ESTRUTURA=[
   ["J","FalsoZero","Fazenda X - 150ha (ou vazio)","Alyce"],
   ["K","DataInicio","2026-04-14","Alyce"],["L","DataFim","2026-04-28","Alyce"],
   ["M","TempoExecucao","=L2-K2","Sheets (fórmula)"],
+  ["N","ArmadilhasInstaladas","4","Wesley/Luiz"],
+  ["O","DataArmadilhamento","2026-04-14","Wesley/Luiz"],
+  ["P","ArmadilhasRecolhidas","4","Wesley/Luiz"],
+  ["Q","DataRecolhimento","2026-04-21","Wesley/Luiz"],
 ];
 const APPS_SCRIPT=`function doGet(e) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet()
@@ -752,6 +756,7 @@ function renderTeam(){
   areas.forEach(a=>{if(a.Colaborador&&areasPorColab[a.Colaborador]!==undefined)areasPorColab[a.Colaborador].push(a);});
   const ativos=allNomes.filter(n=>areasPorColab[n].length>0);
   if(total)total.textContent=`${ativos.length} de ${colabs.length} com áreas ativas`;
+  if(!grid)return;
   grid.innerHTML=colabs.map(col=>{
     const mine=areasPorColab[col.nome]||[];
     const ha=mine.reduce((s,a)=>s+(parseFloat(a.HA)||0),0);
@@ -858,7 +863,18 @@ window.renderAreas=function(){
             ${prazoT?`<span class="pill" style="color:${prazoC};border-color:${prazoC}44">${prazoT}</span>`:""}
             ${tempo!==null?`<span class="pill" style="color:var(--teal);border-color:rgba(20,184,166,.3)">⏱ ${tempo}d</span>`:""}
             ${a.FalsoZero?`<span class="pill" style="color:#C084FC;border-color:#A855F733">↩ ${a.FalsoZero}</span>`:""}
+            ${String(a.Fluxo)==="1"&&a.ArmadilhasInstaladas?`<span class="pill" style="color:var(--green3);border-color:#22C55E33">🪤 ${a.ArmadilhasRecolhidas||0}/${a.ArmadilhasInstaladas} recolhidas</span>`:""}
           </div>
+          ${String(a.Fluxo)==="1"&&a.ArmadilhasInstaladas&&parseInt(a.ArmadilhasInstaladas)>0?`
+          <div style="margin-top:6px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+              <span style="font-size:10px;color:var(--text3)">🪤 Armadilhas: ${a.DataArmadilhamento||"—"} → ${a.DataRecolhimento||"pendente"}</span>
+              <span style="font-size:10px;color:var(--green3);font-weight:600">${Math.round(((parseInt(a.ArmadilhasRecolhidas)||0)/Math.max(1,parseInt(a.ArmadilhasInstaladas)||1))*100)}%</span>
+            </div>
+            <div style="height:3px;background:var(--border);border-radius:2px;overflow:hidden">
+              <div style="height:100%;width:${Math.round(((parseInt(a.ArmadilhasRecolhidas)||0)/Math.max(1,parseInt(a.ArmadilhasInstaladas)||1))*100)}%;background:${(parseInt(a.ArmadilhasRecolhidas)||0)>=(parseInt(a.ArmadilhasInstaladas)||1)?"#22C55E":"#F59E0B"};border-radius:2px"></div>
+            </div>
+          </div>`:""}
         </div>
         <div class="area-right">
           <span class="badge" style="background:${st.color}18;border:1px solid ${st.color}40;color:${st.color}">${st.icon} ${st.label}</span>
@@ -930,6 +946,23 @@ window.abrirModal=function(enc){
       <div class="form-group"><label class="form-label">Data Fim / Prazo</label>
         <input type="date" id="m-fim" value="${a.DataFim||""}"/></div>
     </div>
+    ${String(a.Fluxo)==="1"||!a.Fluxo?`
+    <hr class="form-divider"/>
+    <div style="font-size:12px;font-weight:700;color:var(--green3);margin-bottom:10px;display:flex;align-items:center;gap:6px">
+      🪤 Armadilhas de Feromônio <span style="font-size:10px;font-weight:400;color:var(--text3)">(Fluxo 1 — Monitoramento)</span>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Nº Armadilhas Instaladas</label>
+        <input type="number" id="m-arm-inst" placeholder="Ex: 4" value="${a.ArmadilhasInstaladas||""}"/></div>
+      <div class="form-group"><label class="form-label">Data do Armadilhamento</label>
+        <input type="date" id="m-data-arm" value="${a.DataArmadilhamento||""}"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Nº Armadilhas Recolhidas</label>
+        <input type="number" id="m-arm-rec" placeholder="Ex: 4" value="${a.ArmadilhasRecolhidas||""}"/></div>
+      <div class="form-group"><label class="form-label">Data do Recolhimento</label>
+        <input type="date" id="m-data-rec" value="${a.DataRecolhimento||""}"/></div>
+    </div>`:""}
     <div style="display:flex;gap:8px;margin-top:18px">
       <button class="btn-ghost" style="flex:1" onclick="window.fecharModal()">Cancelar</button>
       <button class="btn-primary" style="flex:2" onclick="window.salvarEdicao('${enc}')">✓ Salvar no Sheets</button>
@@ -942,6 +975,10 @@ window.atualizarEtapasModal=function(f){
   const etapas=getEtapas(f);
   document.getElementById("m-etapa").innerHTML=etapas.map((e,i)=>`<option value="${i+1}">${i+1}. ${e}</option>`).join("");
 };
+window.toggleTrapFields=function(fluxo){
+  const tf=document.getElementById("trap-fields-nova");
+  if(tf)tf.style.display=fluxo==="1"?"block":"none";
+};
 window.fecharModal=function(){document.getElementById("modal").style.display="none";};
 
 window.salvarEdicao=async function(enc){
@@ -951,11 +988,17 @@ window.salvarEdicao=async function(enc){
   const ini=document.getElementById("m-inicio").value;
   const fim=document.getElementById("m-fim").value;
   const tempo=calcTempo(ini,fim);
+  const fluxoVal=document.getElementById("m-fluxo").value;
+  const armInst=fluxoVal==="1"?(document.getElementById("m-arm-inst")?.value||""):"";
+  const dataArm=fluxoVal==="1"?(document.getElementById("m-data-arm")?.value||""):"";
+  const armRec=fluxoVal==="1"?(document.getElementById("m-arm-rec")?.value||""):"";
+  const dataRec=fluxoVal==="1"?(document.getElementById("m-data-rec")?.value||""):"";
   const row=[a.ID,document.getElementById("m-produtor").value,document.getElementById("m-fazenda").value,
-    document.getElementById("m-colaborador").value,document.getElementById("m-fluxo").value,
+    document.getElementById("m-colaborador").value,fluxoVal,
     document.getElementById("m-etapa").value,document.getElementById("m-status").value,
     document.getElementById("m-ha").value,document.getElementById("m-obs").value,
-    document.getElementById("m-falso").value,ini,fim,tempo!==null?tempo:""];
+    document.getElementById("m-falso").value,ini,fim,tempo!==null?tempo:"",
+    armInst,dataArm,armRec,dataRec];
   okEl.innerHTML=`<span class="loading-spin"></span> Salvando...`;okEl.style.display="block";
   try{
     await fetch(scriptUrl,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},
@@ -1280,7 +1323,7 @@ window.abrirNovaArea=function(){
     +'<input type="number" id="m-ha" placeholder="0"/></div></div>'
     +'<div class="form-row">'
     +'<div class="form-group"><label class="form-label">Fluxo</label>'
-    +'<select id="m-fluxo" onchange="window.atualizarEtapasModal(this.value)">'
+    +'<select id="m-fluxo" onchange="window.atualizarEtapasModal(this.value);window.toggleTrapFields(this.value)">'+
     +'<option value="1">🔍 Fluxo 1 — Monitoramento</option>'
     +'<option value="2">🚁 Fluxo 2 — Aplicação</option>'
     +'<option value="3">💰 Fluxo 3 — Faturamento</option>'
@@ -1299,6 +1342,20 @@ window.abrirNovaArea=function(){
     +'<input type="date" id="m-inicio" value="'+hoje+'"/></div>'
     +'<div class="form-group"><label class="form-label">Data Fim / Prazo</label>'
     +'<input type="date" id="m-fim"/></div></div>'
+    +'<div id="trap-fields-nova" style="display:none">'
+    +'<hr class="form-divider"/>'
+    +'<div style="font-size:12px;font-weight:700;color:#4ADE80;margin-bottom:10px">🪤 Armadilhas de Feromônio</div>'
+    +'<div class="form-row">'
+    +'<div class="form-group"><label class="form-label">Nº Armadilhas Instaladas</label>'
+    +'<input type="number" id="m-arm-inst" placeholder="Ex: 4"/></div>'
+    +'<div class="form-group"><label class="form-label">Data do Armadilhamento</label>'
+    +'<input type="date" id="m-data-arm"/></div></div>'
+    +'<div class="form-row">'
+    +'<div class="form-group"><label class="form-label">Nº Armadilhas Recolhidas</label>'
+    +'<input type="number" id="m-arm-rec" placeholder="Ex: 4"/></div>'
+    +'<div class="form-group"><label class="form-label">Data do Recolhimento</label>'
+    +'<input type="date" id="m-data-rec"/></div></div>'
+    +'</div>'
     +'<div style="display:flex;gap:8px;margin-top:18px">'
     +'<button class="btn-ghost" style="flex:1" onclick="window.fecharModal()">Cancelar</button>'
     +'<button class="btn-primary" style="flex:2" onclick="window.salvarNovaArea()">✓ Cadastrar Área</button></div>'
@@ -1317,16 +1374,21 @@ window.salvarNovaArea=async function(){
   const ini=document.getElementById("m-inicio").value;
   const fim=document.getElementById("m-fim").value;
   const tempo=calcTempo(ini,fim);
+  const fluxoNovo=document.getElementById("m-fluxo").value;
   const row=[Date.now(),
     document.getElementById("m-produtor").value,fazenda,
     document.getElementById("m-colaborador").value,
-    document.getElementById("m-fluxo").value,
+    fluxoNovo,
     document.getElementById("m-etapa").value,
     document.getElementById("m-status").value,
     document.getElementById("m-ha").value||0,
     document.getElementById("m-obs").value,
     document.getElementById("m-falso").value,
-    ini,fim,tempo!==null?tempo:""];
+    ini,fim,tempo!==null?tempo:"",
+    fluxoNovo==="1"?(document.getElementById("m-arm-inst")?.value||""):"",
+    fluxoNovo==="1"?(document.getElementById("m-data-arm")?.value||""):"",
+    fluxoNovo==="1"?(document.getElementById("m-arm-rec")?.value||""):"",
+    fluxoNovo==="1"?(document.getElementById("m-data-rec")?.value||""):""];
   okEl.innerHTML='<span class="loading-spin"></span> Cadastrando...';okEl.style.display="block";
   try{
     await fetch(scriptUrl,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},
@@ -1477,9 +1539,16 @@ document.addEventListener("DOMContentLoaded",()=>{
   document.getElementById("btn-nova").style.display="block";
   if(scriptUrl){carregarDados(false);iniciarAutoRefresh();}
   else{
-    document.getElementById("painel-desconectado")&&(document.getElementById("painel-desconectado").style.display="block");
     setConnStatus(false);
     renderTeam();
+    // Show "not connected" state in panel
+    const lista=document.getElementById("lista-areas");
+    if(lista)lista.innerHTML=`<div class="empty-state">
+      <div class="empty-icon">🔌</div>
+      <div style="color:var(--amber);font-weight:600;margin-bottom:8px">Planilha não conectada</div>
+      <div style="color:var(--text3);font-size:13px;margin-bottom:16px">Acesse Configurações para conectar ao Google Sheets</div>
+      <button class="btn-primary" onclick="window.acessarConfig()" style="padding:10px 20px">⚙️ Ir para Configurações</button>
+    </div>`;
   }
 });
 </script>
