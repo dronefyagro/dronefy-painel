@@ -123,8 +123,8 @@
 
   <!-- TABS -->
   <div class="tabs">
-    <button class="tab active" onclick="setAba('painel')" id="tab-painel">📊 Painel</button>
-    <button class="tab" onclick="setAba('config')" id="tab-config">⚙️ Configuração</button>
+    <button class="tab active" onclick="window.setAba('painel')" id="tab-painel">📊 Painel</button>
+    <button class="tab" onclick="window.setAba('config')" id="tab-config">⚙️ Configuração</button>
   </div>
 
   <!-- ABA PAINEL -->
@@ -133,7 +133,7 @@
       <div style="font-size:32px;margin-bottom:12px">⚙️</div>
       <div style="color:var(--amber);font-weight:700;font-size:15px;margin-bottom:8px">Planilha não conectada</div>
       <div style="color:var(--muted);font-size:13px;margin-bottom:16px">Configure a URL do Google Sheets na aba Configuração.</div>
-      <button class="btn-primary" onclick="setAba('config')">Ir para Configuração →</button>
+      <button class="btn-primary" onclick="window.setAba('config')">Ir para Configuração →</button>
     </div>
 
     <div id="painel-conteudo" style="display:none">
@@ -143,15 +143,15 @@
       <div class="op-grid" id="operadores"></div>
       <!-- Filtros -->
       <div class="filters">
-        <button class="btn-ghost" id="f-todos" onclick="setFiltroFluxo(0)">Todos os Fluxos</button>
-        <button class="btn-ghost" id="f-f1" onclick="setFiltroFluxo(1)">Fluxo 1</button>
-        <button class="btn-ghost" id="f-f2" onclick="setFiltroFluxo(2)">Fluxo 2</button>
+        <button class="btn-ghost" id="f-todos" onclick="window.setFiltroFluxo(0)">Todos os Fluxos</button>
+        <button class="btn-ghost" id="f-f1" onclick="window.setFiltroFluxo(1)">Fluxo 1</button>
+        <button class="btn-ghost" id="f-f2" onclick="window.setFiltroFluxo(2)">Fluxo 2</button>
         <div class="divider"></div>
-        <button class="btn-ghost" id="fs-todos" onclick="setFiltroStatus('todos')">Todos</button>
-        <button class="btn-ghost" id="fs-atraso" onclick="setFiltroStatus('atraso')">⚠ Atrasados</button>
-        <button class="btn-ghost" id="fs-alerta" onclick="setFiltroStatus('alerta')">⚡ Atenção</button>
-        <button class="btn-ghost" id="fs-ok" onclick="setFiltroStatus('ok')">✓ Em dia</button>
-        <button class="btn-ghost" style="margin-left:auto" onclick="carregarDados()">🔄 Atualizar</button>
+        <button class="btn-ghost" id="fs-todos" onclick="window.setFiltroStatus('todos')">Todos</button>
+        <button class="btn-ghost" id="fs-atraso" onclick="window.setFiltroStatus('atraso')">⚠ Atrasados</button>
+        <button class="btn-ghost" id="fs-alerta" onclick="window.setFiltroStatus('alerta')">⚡ Atenção</button>
+        <button class="btn-ghost" id="fs-ok" onclick="window.setFiltroStatus('ok')">✓ Em dia</button>
+        <button class="btn-ghost" style="margin-left:auto" onclick="window.carregarDados()">🔄 Atualizar</button>
       </div>
       <div id="contagem" style="color:var(--muted);font-size:12px;margin-bottom:10px"></div>
       <div id="lista-areas"></div>
@@ -171,7 +171,7 @@
       </div>
       <div id="erro-config" class="alert alert-red" style="display:none"></div>
       <div id="ok-config" class="alert alert-green" style="display:none"></div>
-      <button class="btn-primary" style="width:100%;padding:12px" onclick="conectar()">
+      <button class="btn-primary" style="width:100%;padding:12px" onclick="window.conectar()">
         🔌 Conectar e Carregar Dados
       </button>
     </div>
@@ -189,11 +189,11 @@
 </div>
 
 <!-- MODAL -->
-<div class="modal-overlay" id="modal" style="display:none" onclick="fecharModal(event)">
+<div class="modal-overlay" id="modal" style="display:none" onclick="window.fecharModal(event)">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header">
       <span class="modal-title" id="modal-titulo">✏️ Editar Área</span>
-      <button class="close-btn" onclick="fecharModal()">✕</button>
+      <button class="close-btn" onclick="window.fecharModal()">✕</button>
     </div>
     <div id="modal-corpo"></div>
   </div>
@@ -240,6 +240,14 @@ let areas = [];
 let filtroFluxo = 0;
 let filtroStatus = "todos";
 
+window.setAba=setAba;
+window.conectar=conectar;
+window.carregarDados=carregarDados;
+window.setFiltroFluxo=setFiltroFluxo;
+window.setFiltroStatus=setFiltroStatus;
+window.abrirModal=abrirModal;
+window.salvarEdicao=salvarEdicao;
+window.fecharModal=fecharModal;
 // ─── INIT ──────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
   // Data
@@ -387,13 +395,13 @@ function renderAreas() {
     const prazoDate = a.Prazo ? new Date(a.Prazo) : null;
     const diasR = prazoDate ? Math.ceil((prazoDate-new Date())/(86400000)) : null;
     const prazoColor = diasR===null?"#5A7A5A":diasR<0?"#F87171":diasR<=2?"#F59E0B":"#5A7A5A";
-    const prazoTxt = diasR===null?"":diasR<0?`${Math.abs(diasR)}d atrasado`:diasR===0?"Hoje!`:`${diasR}d`;
+    const prazoTxt = diasR===null?"":diasR<0?`${Math.abs(diasR)}d atrasado`:diasR===0?"Hoje!":`${diasR}d`;
     const falsoTag = String(a.FalsoZero)==="true" ? `<span style="background:rgba(192,132,252,.15);border:1px solid rgba(192,132,252,.3);border-radius:6px;padding:2px 8px;font-size:11px;color:#C084FC">↩ FalsoZero</span>` : "";
     const fillColor = a.Status==="atraso"?"#F87171":a.Status==="alerta"?"#F59E0B":a.Status==="falso"?"#C084FC":"#4ADE80";
     const borderClass = a.Status==="atraso"?"card-red":a.Status==="falso"?"card-purple":"";
     const obsHtml = a.Observacoes ? `<div class="obs">💬 ${a.Observacoes}</div>` : "";
 
-    return `<div class="area-card ${borderClass}" onclick="abrirModal('${encodeURIComponent(JSON.stringify(a))}')">
+    return `<div class="area-card ${borderClass}" onclick="window.abrirModal('${encodeURIComponent(JSON.stringify(a))}')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px">
         <span class="area-title">${a.Fazenda||"—"}</span>
         <span class="badge" style="background:${st.color}18;border:1px solid ${st.color}40;color:${st.color}">${st.icon} ${st.label}</span>
@@ -464,8 +472,8 @@ function abrirModal(encodedArea) {
       <label for="m-falso" style="color:var(--muted);font-size:13px;cursor:pointer">FalsoZero — aguardando remonitoramento (10–15 dias)</label>
     </div>
     <div style="display:flex;gap:8px;margin-top:18px">
-      <button class="btn-ghost" style="flex:1" onclick="fecharModal()">Cancelar</button>
-      <button class="btn-primary" style="flex:2" onclick="salvarEdicao('${encodeURIComponent(JSON.stringify(area))}')">✓ Salvar no Sheets</button>
+      <button class="btn-ghost" style="flex:1" onclick="window.fecharModal()">Cancelar</button>
+      <button class="btn-primary" style="flex:2" onclick="window.salvarEdicao('${encodeURIComponent(JSON.stringify(area))}')">✓ Salvar no Sheets</button>
     </div>
     <div id="modal-erro" class="alert alert-red" style="display:none;margin-top:10px"></div>
     <div id="modal-ok" class="alert alert-green" style="display:none;margin-top:10px"></div>
