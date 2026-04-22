@@ -332,6 +332,7 @@ button:active{transform:scale(.97)}
     <div class="tv-tabs" id="tv-tabs">
       <button class="tv-tab active" id="tv-tab-painel" onclick="window.tvIrPara('painel')">📊 Painel</button>
       <button class="tv-tab" id="tv-tab-rotas" onclick="window.tvIrPara('rotas')">📍 Rotas</button>
+      <button class="tv-tab" id="tv-tab-fat" onclick="window.tvIrPara('fat')">💰 Faturamento</button>
       <button class="tv-tab" id="tv-tab-agenda" onclick="window.tvIrPara('agenda')">📅 Agenda</button>
     </div>
     <div class="topbar-actions">
@@ -457,7 +458,7 @@ button:active{transform:scale(.97)}
     <!-- Estrutura -->
     <div class="config-section">
       <div class="config-title" style="color:var(--amber)">📋 Estrutura da planilha</div>
-      <div class="script-box" style="color:var(--teal);font-size:12px;margin-bottom:12px">ID | Produtor Rural | Fazenda | Colaborador | Fluxo | Etapa | Status | HA | Observacoes | FalsoZero | DataInicio | DataFim | TempoExecucao | ArmadilhasInstaladas | DataArmadilhamento | ArmadilhasRecolhidas | DataRecolhimento | Rota</div>
+      <div class="script-box" style="color:var(--teal);font-size:12px;margin-bottom:12px">ID | Produtor Rural | Fazenda | Colaborador | Fluxo | Etapa | Status | HA | Observacoes | FalsoZero | DataInicio | DataFim | TempoExecucao | ArmadilhasInstaladas | DataArmadilhamento | ArmadilhasRecolhidas | DataRecolhimento | Rota | ValorNF</div>
       <table class="struct-table"><thead><tr><th>Col</th><th>Nome</th><th>Exemplo</th><th>Por quem</th></tr></thead>
       <tbody id="tabela-estrutura"></tbody></table>
     </div>
@@ -502,6 +503,18 @@ button:active{transform:scale(.97)}
     </div>
     <div id="rotas-resumo" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:24px"></div>
     <div id="rotas-lista"></div>
+  </div>
+
+  <!-- FATURAMENTO TV VIEW -->
+  <div class="content" id="content-fat" style="display:none">
+    <div class="section-header">
+      <div>
+        <div class="section-title">💰 Faturamento</div>
+        <div style="color:var(--text3);font-size:12px;margin-top:3px">Visão geral de NFs emitidas e valores</div>
+      </div>
+    </div>
+    <div id="fat-resumo" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:24px"></div>
+    <div id="fat-lista"></div>
   </div>
 
   <!-- AGENDA -->
@@ -621,6 +634,7 @@ const ESTRUTURA=[
   ["P","ArmadilhasRecolhidas","4","Wesley/Luiz"],
   ["Q","DataRecolhimento","2026-04-21","Wesley/Luiz"],
   ["R","Rota","Rota A","Alyce"],
+  ["S","ValorNF","1500.00","Andressa"],
 ];
 const APPS_SCRIPT=`function doGet(e) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet()
@@ -713,12 +727,12 @@ window.setAba=function(aba){
     window.acessarConfig();return;
   }
   abaAtual=aba;
-  const abas=["painel","config","rotas","agenda","metas"];
+  const abas=["painel","config","rotas","fat","agenda","metas"];
   abas.forEach(a=>{
     const el=document.getElementById("content-"+a);
     if(el)el.style.display=a===aba?"block":"none";
   });
-  ["painel","config","rotas","agenda","metas"].forEach(a=>{
+  ["painel","config","rotas","fat","agenda","metas"].forEach(a=>{
     const el=document.getElementById("nav-"+a);
     if(el)el.classList.toggle("active",a===aba);
   });
@@ -731,6 +745,7 @@ window.setAba=function(aba){
     painel:"Painel Geral",
     config:"Configurações — Acesso Restrito",
     rotas:"Rotas de Monitoramento",
+    fat:"Faturamento",
     agenda:"Agenda de Monitoramento",
     metas:"Metas Mensais",
   };
@@ -741,6 +756,7 @@ window.setAba=function(aba){
   if(bn)bn.style.display=aba==="painel"?"block":"none";
   if(aba==="config")renderConfigUI();
   if(aba==="rotas")window.renderRotas();
+  if(aba==="fat")window.renderFat();
   if(aba==="agenda")window.renderAgenda();
   if(aba==="metas")window.renderMetas();
 };
@@ -799,22 +815,37 @@ function renderPainel(){
 function renderKPIs(){
   const totalHa=areas.reduce((s,a)=>s+(parseFloat(a.HA)||0),0);
   const atrasos=areas.filter(a=>a.Status==="atraso").length;
-  const concluidos=areas.filter(a=>a.Status==="pago"||a.Status==="ok").length;
-  const taxaConclusao=areas.length?Math.round((concluidos/areas.length)*100):0;
+  // Faturamento: soma ValorNF de áreas do Fluxo 3
+  const totalFatBruto=areas
+    .filter(a=>String(a.Fluxo)==="3"&&a.ValorNF)
+    .reduce((s,a)=>s+(parseFloat(String(a.ValorNF).replace(",","."))||0),0);
+  const totalFatRecebido=areas
+    .filter(a=>String(a.Fluxo)==="3"&&a.Status==="pago"&&a.ValorNF)
+    .reduce((s,a)=>s+(parseFloat(String(a.ValorNF).replace(",","."))||0),0);
+  const nfEmitidas=areas.filter(a=>String(a.Fluxo)==="3").length;
+  const nfRecebidas=areas.filter(a=>String(a.Fluxo)==="3"&&a.Status==="pago").length;
+  // Formatar R$
+  function fmtBRL(v){
+    if(v===0)return"R$ 0";
+    if(v>=1000)return"R$ "+Math.round(v/1000).toLocaleString("pt-BR")+"k";
+    return"R$ "+v.toLocaleString("pt-BR",{minimumFractionDigits:0,maximumFractionDigits:0});
+  }
   const kpis=[
-    {icon:"📋",val:areas.length,label:"Áreas Ativas",color:"var(--blue)",bar:"#3B82F6"},
-    {icon:"🌾",val:Math.round(totalHa).toLocaleString("pt-BR"),label:"Hectares Totais",color:"var(--teal)",bar:"#14B8A6"},
-    {icon:"🔍",val:areas.filter(a=>String(a.Fluxo)==="1").length,label:"Monitoramento",color:"var(--green3)",bar:"#22C55E"},
-    {icon:"🚁",val:areas.filter(a=>String(a.Fluxo)==="2").length,label:"Aplicação",color:"var(--amber)",bar:"#F59E0B"},
-    {icon:"💰",val:areas.filter(a=>String(a.Fluxo)==="3").length,label:"Faturamento",color:"var(--orange)",bar:"#F97316"},
-    {icon:"⚠️",val:atrasos,label:"Atrasadas",color:"var(--red)",bar:"#EF4444"},
+    {icon:"📋",val:areas.length,label:"Áreas Ativas",color:"var(--blue)",bar:"#3B82F6",sub:null},
+    {icon:"🌾",val:Math.round(totalHa).toLocaleString("pt-BR"),label:"Hectares Totais",color:"var(--teal)",bar:"#14B8A6",sub:"ha"},
+    {icon:"🔍",val:areas.filter(a=>String(a.Fluxo)==="1").length,label:"Monitoramento",color:"var(--green3)",bar:"#22C55E",sub:"áreas"},
+    {icon:"🚁",val:areas.filter(a=>String(a.Fluxo)==="2").length,label:"Aplicação",color:"var(--amber)",bar:"#F59E0B",sub:"áreas"},
+    {icon:"💰",val:fmtBRL(totalFatBruto),label:"Faturamento",color:"var(--orange)",bar:"#F97316",
+      sub:totalFatRecebido>0?fmtBRL(totalFatRecebido)+" recebido":nfEmitidas+" NF(s)"},
+    {icon:"⚠️",val:atrasos,label:"Atrasadas",color:"var(--red)",bar:"#EF4444",sub:null},
   ];
   const cont=document.getElementById("kpis");
   cont.innerHTML=kpis.map(k=>`
-    <div class="kpi-card" style="border-top:3px solid ${k.bar}20">
+    <div class="kpi-card" style="border-top:3px solid ${k.bar}33">
       <div class="kpi-icon">${k.icon}</div>
-      <div class="kpi-val" style="color:${k.color}">${k.val}</div>
+      <div class="kpi-val" style="color:${k.color};font-size:${String(k.val).length>8?"18px":"26px"}">${k.val}</div>
       <div class="kpi-label">${k.label}</div>
+      ${k.sub?`<div style="font-size:10px;color:var(--text3);margin-top:3px">${k.sub}</div>`:""}
     </div>`).join("");
 }
 
@@ -965,6 +996,10 @@ window.renderAreas=function(){
         </div>
         <div class="prog-bar"><div class="prog-fill" style="width:${prog}%;background:${fillC}"></div></div>
       </div>
+      ${a.ValorNF&&String(a.Fluxo)==="3"?`<div style="margin-top:6px;display:flex;align-items:center;gap:6px">
+        <span style="font-size:11px;color:var(--orange);font-weight:700">💰 R$ ${parseFloat(String(a.ValorNF).replace(",",".")).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+        ${a.Status==="pago"?'<span style="font-size:10px;color:var(--teal);background:rgba(20,184,166,.15);border-radius:4px;padding:1px 6px">✓ Recebido</span>':'<span style="font-size:10px;color:var(--amber);background:rgba(245,158,11,.15);border-radius:4px;padding:1px 6px">⏳ Pendente</span>'}
+      </div>`:""}
       ${a.Observacoes?`<div class="area-obs">💬 ${a.Observacoes}</div>`:""}
     </div>`;
   }).join("");
@@ -1004,7 +1039,8 @@ window.abrirModal=function(enc){
     <div class="form-row">
       <div class="form-group"><label class="form-label">Rota</label>
         <input id="m-rota" placeholder="Ex: Rota A" value="${a.Rota||""}"/></div>
-      <div class="form-group"></div>
+      <div class="form-group"><label class="form-label">Valor NF (R$)</label>
+        <input type="number" step="0.01" id="m-valor-nf" placeholder="Ex: 1500.00" value="${a.ValorNF||""}"/></div>
     </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Fluxo</label>
@@ -1077,12 +1113,13 @@ window.salvarEdicao=async function(enc){
   const armRec=fluxoVal==="1"?(document.getElementById("m-arm-rec")?.value||""):"";
   const dataRec=fluxoVal==="1"?(document.getElementById("m-data-rec")?.value||""):"";
   const rotaVal=document.getElementById("m-rota")?.value||"";
+  const valorNFVal=document.getElementById("m-valor-nf")?.value||"";
   const row=[a.ID,document.getElementById("m-produtor").value,document.getElementById("m-fazenda").value,
     document.getElementById("m-colaborador").value,fluxoVal,
     document.getElementById("m-etapa").value,document.getElementById("m-status").value,
     document.getElementById("m-ha").value,document.getElementById("m-obs").value,
     document.getElementById("m-falso").value,ini,fim,tempo!==null?tempo:"",
-    armInst,dataArm,armRec,dataRec,rotaVal];
+    armInst,dataArm,armRec,dataRec,rotaVal,valorNFVal];
   okEl.innerHTML=`<span class="loading-spin"></span> Salvando...`;okEl.style.display="block";
   try{
     await fetch(scriptUrl,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},
@@ -1417,7 +1454,8 @@ window.abrirNovaArea=function(){
     +'<div class="form-row">'
     +'<div class="form-group"><label class="form-label">Rota</label>'
     +'<input id="m-rota" placeholder="Ex: Rota A"/></div>'
-    +'<div class="form-group"></div></div>'
+    +'<div class="form-group"><label class="form-label">Valor NF (R$)</label>'
+    +'<input type="number" step="0.01" id="m-valor-nf" placeholder="Ex: 1500.00"/></div></div>'
     +'<div class="form-row">'
     +'<div class="form-group"><label class="form-label">Fluxo</label>'
     +'<select id="m-fluxo" onchange="window.atualizarEtapasModal(this.value);window.toggleTrapFields(this.value)">'
@@ -1486,7 +1524,8 @@ window.salvarNovaArea=async function(){
     fluxoNovo==="1"?(document.getElementById("m-data-arm")?.value||""):"",
     fluxoNovo==="1"?(document.getElementById("m-arm-rec")?.value||""):"",
     fluxoNovo==="1"?(document.getElementById("m-data-rec")?.value||""):"",
-    document.getElementById("m-rota")?.value||""];
+    document.getElementById("m-rota")?.value||"",
+    document.getElementById("m-valor-nf")?.value||""];
   okEl.innerHTML='<span class="loading-spin"></span> Cadastrando...';okEl.style.display="block";
   try{
     await fetch(scriptUrl,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},
@@ -1581,6 +1620,83 @@ window.filtrarPorRota=function(rota){
   var s=document.getElementById("search-input");
   if(s){s.value=rota;window.renderAreas();}
 };
+
+// ═══ FATURAMENTO ══════════════════════════════════════════════════════════
+window.renderFat=function(){
+  var resumoEl=document.getElementById("fat-resumo");
+  var listaEl=document.getElementById("fat-lista");
+  if(!resumoEl||!listaEl)return;
+
+  var fatAreas=areas.filter(function(a){return String(a.Fluxo)==="3";});
+  var totalBruto=fatAreas.reduce(function(s,a){return s+(parseFloat(String(a.ValorNF||"0").replace(",","."))||0);},0);
+  var totalRecebido=fatAreas.filter(function(a){return a.Status==="pago";})
+    .reduce(function(s,a){return s+(parseFloat(String(a.ValorNF||"0").replace(",","."))||0);},0);
+  var totalPendente=totalBruto-totalRecebido;
+  var nfEmitidas=fatAreas.length;
+  var nfRecebidas=fatAreas.filter(function(a){return a.Status==="pago";}).length;
+  var pctRecebido=totalBruto>0?Math.round((totalRecebido/totalBruto)*100):0;
+
+  function fmtBRL(v){
+    return"R$ "+v.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+
+  if(!fatAreas.length){
+    resumoEl.innerHTML="";
+    listaEl.innerHTML='<div class="empty-state"><div class="empty-icon">💰</div>'
+      +'<div style="color:var(--amber);font-weight:600">Nenhuma área no Fluxo 3 (Faturamento)</div>'
+      +'<div style="font-size:13px;color:var(--text3);margin-top:8px">Cadastre áreas com Fluxo 3 e preencha o campo ValorNF na planilha.</div></div>';
+    return;
+  }
+
+  resumoEl.innerHTML=
+    '<div style="background:var(--card);border:1px solid #F97316 33;border-top:3px solid #F97316;border-radius:14px;padding:18px">'
+    +'<div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">💰 Total Emitido</div>'
+    +'<div style="font-size:26px;font-weight:800;color:#F97316">'+fmtBRL(totalBruto)+'</div>'
+    +'<div style="font-size:11px;color:var(--text3);margin-top:4px">'+nfEmitidas+' NF(s) emitida(s)</div></div>'
+
+    +'<div style="background:var(--card);border:1px solid #14B8A633;border-top:3px solid #14B8A6;border-radius:14px;padding:18px">'
+    +'<div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">✓ Total Recebido</div>'
+    +'<div style="font-size:26px;font-weight:800;color:#14B8A6">'+fmtBRL(totalRecebido)+'</div>'
+    +'<div style="font-size:11px;color:var(--text3);margin-top:4px">'+nfRecebidas+' NF(s) pagas</div></div>'
+
+    +'<div style="background:var(--card);border:1px solid #F59E0B33;border-top:3px solid #F59E0B;border-radius:14px;padding:18px">'
+    +'<div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">⏳ A Receber</div>'
+    +'<div style="font-size:26px;font-weight:800;color:#F59E0B">'+fmtBRL(totalPendente)+'</div>'
+    +'<div style="font-size:11px;color:var(--text3);margin-top:4px">'+(nfEmitidas-nfRecebidas)+' NF(s) pendentes</div></div>'
+
+    +'<div style="background:var(--card);border:1px solid #3B82F633;border-top:3px solid #3B82F6;border-radius:14px;padding:18px">'
+    +'<div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">📊 Recebimento</div>'
+    +'<div style="font-size:26px;font-weight:800;color:#3B82F6">'+pctRecebido+'%</div>'
+    +'<div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:8px">'
+    +'<div style="height:100%;width:'+pctRecebido+'%;background:'+(pctRecebido>=100?"#22C55E":"#3B82F6")+';border-radius:3px"></div></div></div>';
+
+  listaEl.innerHTML='<div style="font-weight:700;font-size:14px;color:var(--white);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)">Detalhamento por Área</div>'
+    +fatAreas.map(function(a){
+      var valor=parseFloat(String(a.ValorNF||"0").replace(",","."))||0;
+      var pago=a.Status==="pago";
+      var rc=getCorColab(a.Colaborador);
+      var enc=encodeURIComponent(JSON.stringify(a));
+      return '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;'
+        +'padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer"'
+        +' onclick="window.abrirModal(\''+enc+'\')">'
+        +'<div style="flex:1;min-width:0">'
+        +'<div style="color:var(--white);font-weight:600;font-size:13px">'+(a.Fazenda||"—")+'</div>'
+        +(a["Produtor Rural"]?'<div style="color:var(--text3);font-size:11px">👤 '+a["Produtor Rural"]+'</div>':"")
+        +'<div style="display:flex;gap:5px;margin-top:5px;flex-wrap:wrap">'
+        +'<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:'+rc+'15;color:'+rc+'">'+(a.Colaborador||"—")+'</span>'
+        +(a.Rota?'<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:#3B82F615;color:#3B82F6">📍 '+a.Rota+'</span>':"")
+        +'</div></div>'
+        +'<div style="text-align:right;flex-shrink:0">'
+        +(valor>0?'<div style="font-size:15px;font-weight:700;color:#F97316">'+fmtBRL(valor)+'</div>'
+                 :'<div style="font-size:13px;color:var(--text3)">Sem valor</div>')
+        +'<div style="margin-top:4px">'
+        +(pago?'<span style="font-size:10px;background:rgba(20,184,166,.15);border-radius:4px;padding:2px 8px;color:#14B8A6">✓ Recebido</span>'
+              :'<span style="font-size:10px;background:rgba(245,158,11,.15);border-radius:4px;padding:2px 8px;color:#F59E0B">⏳ Pendente</span>')
+        +'</div></div></div>';
+    }).join("");
+};
+
+
 // ═══ WINDOW EXPORTS ════════════════════════════════════════════════════
 window.setAba=window.setAba;
 window.conectar=window.conectar;
@@ -1607,6 +1723,7 @@ window.renderMetas=window.renderMetas;
 window.salvarMetas=window.salvarMetas;
 window.renderRotas=window.renderRotas;
 window.filtrarPorRota=window.filtrarPorRota;
+window.renderFat=window.renderFat;
 window.tvIrPara=window.tvIrPara;
 window.tvPausar=window.tvPausar;
 
@@ -1717,10 +1834,10 @@ window.trocarSenha=function(){
 
 
 // ═══ MODO TV ═══════════════════════════════════════════════════════════
-const TV_ABAS = ["painel","rotas","agenda"];
-const TV_LABELS = {painel:"Painel",rotas:"Rotas",agenda:"Agenda"};
+const TV_ABAS = ["painel","rotas","fat","agenda"];
+const TV_LABELS = {painel:"Painel Geral",rotas:"Rotas",agenda:"Agenda",fat:"Faturamento"};
 let tvAtivo = false;
-let tvIntervalo = 60; // segundos por aba (configurável)
+let tvIntervalo = 30; // segundos por aba (configurável)
 let tvAbaIdx = 0;
 let tvTimer = null;
 let tvCountTimer = null;
@@ -1732,7 +1849,7 @@ function iniciarModoTV(){
   if(!params.has("tv")) return;
 
   tvAtivo = true;
-  tvIntervalo = parseInt(params.get("tv"))||60;
+  tvIntervalo = parseInt(params.get("tv"))||30;
   document.body.classList.add("tv-mode");
 
   // Wake lock — impede a tela de apagar
