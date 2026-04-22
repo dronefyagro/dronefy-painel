@@ -242,6 +242,17 @@ button:active{transform:scale(.97)}
   </div>
 
   <div class="nav-section">
+    <div class="nav-label">Planejamento</div>
+    <button class="nav-btn" id="nav-agenda" onclick="window.setAba('agenda')">
+      <span class="nav-icon">📅</span> Agenda
+      <span class="nav-badge" id="badge-agenda" style="display:none">0</span>
+    </button>
+    <button class="nav-btn" id="nav-metas" onclick="window.setAba('metas')">
+      <span class="nav-icon">🎯</span> Metas Mensais
+    </button>
+  </div>
+
+  <div class="nav-section">
     <div class="nav-label">Sistema</div>
     <button class="nav-btn" id="nav-config" onclick="window.acessarConfig()">
       <span class="nav-icon">⚙️</span> Configurações
@@ -273,7 +284,7 @@ button:active{transform:scale(.97)}
     </div>
     <div class="topbar-actions">
       <button class="btn-ghost btn-icon" title="Atualizar agora" onclick="window.carregarDados(true)" id="btn-refresh">🔄</button>
-      <button class="btn-primary" onclick="window.setAba('nova-area')" style="display:none" id="btn-nova">+ Nova Área</button>
+      <button class="btn-primary" onclick="window.abrirNovaArea()" style="display:none" id="btn-nova">+ Nova Área</button>
     </div>
   </div>
 
@@ -413,6 +424,72 @@ button:active{transform:scale(.97)}
       <div class="script-box" id="script-code"></div>
     </div>
   </div>
+
+  <!-- AGENDA -->
+  <div class="content" id="content-agenda" style="display:none">
+    <div class="section-header">
+      <div>
+        <div class="section-title">📅 Agenda de Monitoramento</div>
+        <div style="color:var(--text3);font-size:12px;margin-top:3px">Próximos 45 dias · Janelas de monitoramento e prazos críticos</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="agenda-filtro" onchange="window.renderAgenda()" style="width:190px;font-size:12px;padding:7px 10px">
+          <option value="todos">Todos os colaboradores</option>
+        </select>
+        <button class="btn-ghost" onclick="window.carregarDados(true)" style="font-size:12px;padding:7px 12px">🔄 Atualizar</button>
+      </div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:20px">
+      <div style="font-weight:600;font-size:13px;color:var(--white);margin-bottom:14px">Linha do tempo — próximos 45 dias</div>
+      <div id="timeline-strip" style="display:flex;gap:3px;overflow-x:auto;padding-bottom:8px"></div>
+      <div style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap">
+        <span style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:50%;background:#EF4444;display:inline-block"></span>Vence em até 3 dias</span>
+        <span style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:50%;background:#F59E0B;display:inline-block"></span>Vence em 4–7 dias</span>
+        <span style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:50%;background:#22C55E;display:inline-block"></span>Vence em 8+ dias</span>
+        <span style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:50%;background:#3B82F6;display:inline-block"></span>Sem prazo definido</span>
+      </div>
+    </div>
+    <div id="agenda-urgente" style="margin-bottom:16px"></div>
+    <div id="agenda-lista"></div>
+  </div>
+
+  <!-- METAS -->
+  <div class="content" id="content-metas" style="display:none">
+    <div class="section-header">
+      <div>
+        <div class="section-title">🎯 Metas Mensais</div>
+        <div style="color:var(--text3);font-size:12px;margin-top:3px" id="metas-periodo"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="metas-mes" onchange="window.renderMetas()" style="width:180px;font-size:12px;padding:7px 10px"></select>
+        <button class="btn-primary" onclick="window.salvarMetas()" style="font-size:12px;padding:7px 14px">💾 Salvar Metas</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:24px" id="metas-cards"></div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:20px">
+      <div style="font-weight:700;font-size:14px;color:var(--white);margin-bottom:16px">✏️ Definir Metas do Mês</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px">
+        <div><label style="font-size:11px;font-weight:600;color:var(--text3);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">🔍 Monitoramento (ha)</label>
+          <input type="number" id="meta-monit-ha" placeholder="Ex: 8000"/></div>
+        <div><label style="font-size:11px;font-weight:600;color:var(--text3);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">🔍 Monitoramento (áreas)</label>
+          <input type="number" id="meta-monit-areas" placeholder="Ex: 50"/></div>
+        <div><label style="font-size:11px;font-weight:600;color:var(--text3);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">🚁 Aplicação (ha)</label>
+          <input type="number" id="meta-aplic-ha" placeholder="Ex: 5000"/></div>
+        <div><label style="font-size:11px;font-weight:600;color:var(--text3);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">🚁 Aplicação (áreas)</label>
+          <input type="number" id="meta-aplic-areas" placeholder="Ex: 30"/></div>
+        <div><label style="font-size:11px;font-weight:600;color:var(--text3);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">💰 Faturamento (R$)</label>
+          <input type="number" id="meta-fat-valor" placeholder="Ex: 45000"/></div>
+        <div><label style="font-size:11px;font-weight:600;color:var(--text3);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">💰 NFs Emitidas</label>
+          <input type="number" id="meta-fat-nfs" placeholder="Ex: 25"/></div>
+      </div>
+      <div id="metas-ok" class="alert alert-green" style="display:none;margin-top:14px"></div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px">
+      <div style="font-weight:700;font-size:14px;color:var(--white);margin-bottom:16px">📊 Progresso por Colaborador</div>
+      <div id="metas-colab"></div>
+    </div>
+  </div>
+
 </div>
 
 <!-- MODAL EDIÇÃO -->
@@ -508,7 +585,6 @@ let autoInterval = parseInt(localStorage.getItem("dronefy-auto")||"10");
 const COLABS_DEFAULT=[
   {nome:"Wesley",cor:"#F59E0B"},{nome:"Luiz",cor:"#3B82F6"},
   {nome:"Alyce",cor:"#22C55E"},{nome:"Andressa",cor:"#EF4444"},
-  {nome:"Jovenildo",cor:"#A855F7"},
 ];
 function getColabs(){try{const s=localStorage.getItem("dronefy-colabs");return s?JSON.parse(s):COLABS_DEFAULT;}catch{return COLABS_DEFAULT;}}
 function salvarColabs(l){localStorage.setItem("dronefy-colabs",JSON.stringify(l));}
@@ -553,19 +629,34 @@ window.setAba=function(aba){
     window.acessarConfig();return;
   }
   abaAtual=aba;
-  document.getElementById("content-painel").style.display=aba==="painel"?"block":"none";
-  document.getElementById("content-config").style.display=aba==="config"?"block":"none";
-  ["painel","config"].forEach(a=>{
+  const abas=["painel","config","agenda","metas"];
+  abas.forEach(a=>{
+    const el=document.getElementById("content-"+a);
+    if(el)el.style.display=a===aba?"block":"none";
+  });
+  ["painel","config","agenda","metas"].forEach(a=>{
     const el=document.getElementById("nav-"+a);
     if(el)el.classList.toggle("active",a===aba);
   });
-  const titles={painel:"Painel Geral",config:"Configurações — Acesso Restrito"};
+  // nav-f1/f2/f3 só ativo quando painel está aberto
+  ["f1","f2","f3"].forEach(a=>{
+    const el=document.getElementById("nav-"+a);
+    if(el)el.classList.remove("active");
+  });
+  const titles={
+    painel:"Painel Geral",
+    config:"Configurações — Acesso Restrito",
+    agenda:"Agenda de Monitoramento",
+    metas:"Metas Mensais",
+  };
   document.getElementById("page-title").textContent=titles[aba]||"Painel";
   const sw=document.getElementById("search-wrap");
   const bn=document.getElementById("btn-nova");
   if(sw)sw.style.display=aba==="painel"?"block":"none";
   if(bn)bn.style.display=aba==="painel"?"block":"none";
   if(aba==="config")renderConfigUI();
+  if(aba==="agenda")window.renderAgenda();
+  if(aba==="metas")window.renderMetas();
 };
 
 // ═══ CONEXÃO ═══════════════════════════════════════════════════════════
@@ -673,14 +764,40 @@ function renderTeam(){
 function renderAlertas(){
   const el=document.getElementById("alert-atrasos");
   const atrasos=areas.filter(a=>a.Status==="atraso");
+  const alertas=areas.filter(a=>a.Status==="alerta");
   const badge=document.getElementById("badge-atrasos");
   if(badge){badge.textContent=atrasos.length;badge.style.display=atrasos.length>0?"inline":"none";}
   if(!el)return;
-  if(atrasos.length===0){el.style.display="none";return;}
-  el.style.display="flex";
-  el.className="alert-bar alert-bar-red";
-  el.innerHTML=`<span style="font-size:16px">⚠️</span>
-    <span><strong>${atrasos.length} área(s) atrasada(s):</strong> ${atrasos.map(a=>a.Fazenda).join(", ")}</span>`;
+  if(atrasos.length===0&&alertas.length===0){el.style.display="none";return;}
+  el.style.display="block";
+  let html="";
+  if(atrasos.length>0){
+    html+=`<div class="alert-bar alert-bar-red" style="margin-bottom:${alertas.length>0?"8px":"0"}">
+      <span style="font-size:16px;flex-shrink:0">🚨</span>
+      <div>
+        <div style="font-weight:700;margin-bottom:4px">${atrasos.length} área(s) ATRASADA(S) — requer ação imediata</div>
+        <div style="font-size:12px;opacity:.85;display:flex;flex-wrap:wrap;gap:6px">
+          ${atrasos.map(a=>`<span style="background:rgba(239,68,68,.2);border-radius:4px;padding:1px 7px">
+            ${a.Fazenda||"—"} · ${a.Colaborador||"—"}
+          </span>`).join("")}
+        </div>
+      </div>
+    </div>`;
+  }
+  if(alertas.length>0){
+    html+=`<div class="alert-bar alert-bar-amber">
+      <span style="font-size:16px;flex-shrink:0">⚡</span>
+      <div>
+        <div style="font-weight:700;margin-bottom:4px">${alertas.length} área(s) em ATENÇÃO</div>
+        <div style="font-size:12px;opacity:.85;display:flex;flex-wrap:wrap;gap:6px">
+          ${alertas.map(a=>`<span style="background:rgba(245,158,11,.2);border-radius:4px;padding:1px 7px">
+            ${a.Fazenda||"—"} · ${a.Colaborador||"—"}
+          </span>`).join("")}
+        </div>
+      </div>
+    </div>`;
+  }
+  el.innerHTML=html;
 }
 
 window.renderAreas=function(){
@@ -912,6 +1029,306 @@ function calcTempo(ini,fim){
   return Math.ceil((d2-d1)/86400000);
 }
 
+
+
+// ═══ AGENDA ════════════════════════════════════════════════════════════
+window.renderAgenda=function(){
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  const filtroColab=(document.getElementById("agenda-filtro")||{}).value||"todos";
+  const sel=document.getElementById("agenda-filtro");
+  if(sel){
+    const colabs=["todos",...getNomesColabs()];
+    const cur=sel.value;
+    sel.innerHTML=colabs.map(c=>"<option value='"+c+"'"+(c===cur?" selected":"")+">"+(c==="todos"?"Todos os colaboradores":c)+"</option>").join("");
+  }
+  let filtradas=areas.filter(a=>{
+    if(a.Status==="pago")return false;
+    if(filtroColab!=="todos"&&a.Colaborador!==filtroColab)return false;
+    return true;
+  }).map(a=>{
+    const p=a.DataFim?new Date(a.DataFim):null;
+    if(p)p.setHours(0,0,0,0);
+    const d=p?Math.ceil((p-hoje)/86400000):null;
+    return Object.assign({},a,{_prazoDate:p,_diasR:d});
+  }).sort((a,b)=>{
+    if(a._diasR===null&&b._diasR===null)return 0;
+    if(a._diasR===null)return 1;
+    if(b._diasR===null)return -1;
+    return a._diasR-b._diasR;
+  });
+
+  // Timeline
+  const strip=document.getElementById("timeline-strip");
+  if(strip){
+    let html="";
+    for(let i=0;i<45;i++){
+      const d=new Date(hoje);d.setDate(d.getDate()+i);
+      const ds=d.toISOString().split("T")[0];
+      const nd=filtradas.filter(a=>a.DataFim===ds).length;
+      const cor=nd===0?"var(--border)":i<=3?"#EF4444":i<=7?"#F59E0B":"#22C55E";
+      const lbl=d.getDate()===1||i===0?d.toLocaleDateString("pt-BR",{day:"numeric",month:"short"}).replace(" de ",""):String(d.getDate());
+      html+="<div title='"+ds+(nd>0?" — "+nd+" área(s)":"")+"' style='flex-shrink:0;width:22px;text-align:center'>"
+        +"<div style='width:8px;height:"+Math.max(8,Math.min(40,8+nd*10))+"px;border-radius:4px;background:"+cor+";margin:0 auto 4px'></div>"
+        +"<div style='font-size:9px;color:var(--text3)'>"+lbl+"</div></div>";
+    }
+    strip.innerHTML=html;
+  }
+
+  // Urgentes
+  const urgentes=filtradas.filter(a=>a._diasR!==null&&a._diasR<=7);
+  const badge=document.getElementById("badge-agenda");
+  if(badge){badge.textContent=urgentes.length;badge.style.display=urgentes.length>0?"inline":"none";}
+  const elUrg=document.getElementById("agenda-urgente");
+  if(elUrg){
+    if(urgentes.length===0){elUrg.innerHTML="";} else {
+      elUrg.innerHTML="<div style='font-weight:700;font-size:13px;color:var(--red);margin-bottom:10px'>🚨 "
+        +urgentes.length+" área(s) com prazo em até 7 dias</div>"
+        +urgentes.map(a=>{
+          const cor=a._diasR<=3?"#EF4444":"#F59E0B";
+          const txt=a._diasR<0?Math.abs(a._diasR)+"d atrasado":a._diasR===0?"Vence HOJE":a._diasR===1?"Amanhã":a._diasR+" dias";
+          const rc=getCorColab(a.Colaborador);
+          const fi=FLUXO[parseInt(a.Fluxo)]||FLUXO[1];
+          const enc=encodeURIComponent(JSON.stringify(a));
+          return "<div style='background:var(--card);border:1px solid "+cor+"44;border-left:3px solid "+cor+";"
+            +"border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer'"
+            +" onclick='window.abrirModal(\""+enc+"\")'>"
+            +"<div style='background:"+cor+"20;border-radius:8px;padding:8px 12px;text-align:center;flex-shrink:0'>"
+            +"<div style='color:"+cor+";font-weight:800;font-size:18px'>"+(a._diasR<=0?"!":a._diasR)+"</div>"
+            +"<div style='color:"+cor+";font-size:9px;font-weight:600'>"+(a._diasR<=0?"ATRAS":"DIAS")+"</div></div>"
+            +"<div style='flex:1;min-width:0'>"
+            +"<div style='color:var(--white);font-weight:600;font-size:13px'>"+(a.Fazenda||"—")+"</div>"
+            +(a["Produtor Rural"]?"<div style='color:var(--text3);font-size:11px'>👤 "+a["Produtor Rural"]+"</div>":"")
+            +"<div style='display:flex;gap:5px;margin-top:5px;flex-wrap:wrap'>"
+            +"<span style='font-size:10px;padding:2px 7px;border-radius:5px;background:"+fi.color+"18;color:"+fi.color+"'>"+fi.icon+" "+fi.label+"</span>"
+            +"<span style='font-size:10px;padding:2px 7px;border-radius:5px;background:"+rc+"18;color:"+rc+"'>"+(a.Colaborador||"—")+"</span>"
+            +"<span style='font-size:10px;padding:2px 7px;border-radius:5px;background:var(--border);color:var(--text3)'>"+(a.HA||0)+" ha</span>"
+            +"</div></div>"
+            +"<div style='text-align:right;flex-shrink:0'>"
+            +"<div style='color:"+cor+";font-weight:700;font-size:12px'>"+txt+"</div>"
+            +"<div style='color:var(--text3);font-size:11px;margin-top:2px'>"+(a.DataFim||"—")+"</div></div></div>";
+        }).join("");
+    }
+  }
+
+  // Lista por grupo de semanas
+  const lista=document.getElementById("agenda-lista");
+  if(!lista)return;
+  const grupos={s2:[],s3:[],s4:[],s5:[],sp:[]};
+  filtradas.filter(a=>a._diasR===null||a._diasR>7).forEach(a=>{
+    if(a._diasR===null)grupos.sp.push(a);
+    else if(a._diasR<=14)grupos.s2.push(a);
+    else if(a._diasR<=21)grupos.s3.push(a);
+    else if(a._diasR<=30)grupos.s4.push(a);
+    else grupos.s5.push(a);
+  });
+  const defs=[
+    {key:"s2",label:"📅 8 a 14 dias",cor:"#F59E0B"},
+    {key:"s3",label:"📅 15 a 21 dias",cor:"#3B82F6"},
+    {key:"s4",label:"📅 22 a 30 dias",cor:"#22C55E"},
+    {key:"s5",label:"📅 Mais de 30 dias",cor:"#6B8F6B"},
+    {key:"sp",label:"📋 Sem prazo definido",cor:"#6B8F6B"},
+  ];
+  lista.innerHTML=defs.filter(g=>grupos[g.key].length>0).map(g=>
+    "<div style='margin-bottom:16px'>"
+    +"<div style='font-weight:700;font-size:13px;color:"+g.cor+";margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)'>"
+    +g.label+" <span style='font-size:11px;font-weight:400;color:var(--text3)'>("+grupos[g.key].length+" área(s))</span></div>"
+    +grupos[g.key].map(a=>{
+      const rc=getCorColab(a.Colaborador);const fi=FLUXO[parseInt(a.Fluxo)]||FLUXO[1];
+      const st=STATUS[a.Status]||STATUS.ok;const enc=encodeURIComponent(JSON.stringify(a));
+      return "<div style='background:var(--card);border:1px solid var(--border);border-radius:10px;padding:11px 14px;margin-bottom:6px;display:flex;align-items:center;gap:10px;cursor:pointer'"
+        +" onclick='window.abrirModal(\""+enc+"\")'>"
+        +"<div style='flex:1;min-width:0'><div style='color:var(--white);font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis'>"+(a.Fazenda||"—")+"</div>"
+        +(a["Produtor Rural"]?"<div style='color:var(--text3);font-size:11px'>👤 "+a["Produtor Rural"]+"</div>":"")+"</div>"
+        +"<div style='display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end'>"
+        +"<span style='font-size:10px;padding:2px 7px;border-radius:5px;background:"+fi.color+"15;color:"+fi.color+"'>"+fi.icon+" "+fi.label+"</span>"
+        +"<span style='font-size:10px;padding:2px 7px;border-radius:5px;background:"+rc+"15;color:"+rc+"'>"+(a.Colaborador||"—")+"</span>"
+        +"<span style='font-size:10px;padding:2px 7px;border-radius:5px;background:"+st.color+"15;color:"+st.color+"'>"+st.icon+" "+st.label+"</span>"
+        +(a.DataFim?"<span style='font-size:10px;padding:2px 7px;border-radius:5px;background:var(--border);color:"+g.cor+"'>"+a.DataFim+"</span>":"")
+        +"</div></div>";
+    }).join("")+"</div>"
+  ).join("")||"<div class='empty-state'><div class='empty-icon'>📅</div><div>Nenhuma área agendada além dos próximos 7 dias</div></div>";
+};
+
+// ═══ METAS ═══════════════════════════════════════════════════════════════
+function getMetas(k){try{const s=localStorage.getItem("dronefy-metas-"+k);return s?JSON.parse(s):{}}catch{return {};}}
+function salvarMetasLocal(k,d){localStorage.setItem("dronefy-metas-"+k,JSON.stringify(d));}
+function getMesKey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");}
+function getMesLabel(k){const[y,m]=k.split("-");return new Date(parseInt(y),parseInt(m)-1,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"});}
+
+window.renderMetas=function(){
+  const hoje=new Date();
+  const mesSel=document.getElementById("metas-mes");
+  if(mesSel&&!mesSel.dataset.init){
+    mesSel.dataset.init="1";
+    let opts="";
+    for(let i=-3;i<=2;i++){
+      const d=new Date(hoje.getFullYear(),hoje.getMonth()+i,1);
+      const k=getMesKey(d);
+      opts+="<option value='"+k+"'"+(i===0?" selected":"")+">"+(getMesLabel(k))+"</option>";
+    }
+    mesSel.innerHTML=opts;
+  }
+  const mesKey=mesSel?.value||getMesKey(hoje);
+  const metas=getMetas(mesKey);
+  const periodo=document.getElementById("metas-periodo");
+  if(periodo)periodo.textContent=getMesLabel(mesKey);
+  ["monit-ha","monit-areas","aplic-ha","aplic-areas","fat-valor","fat-nfs"].forEach(k=>{
+    const el=document.getElementById("meta-"+k);if(el)el.value=metas[k]||"";
+  });
+  const[y,m]=mesKey.split("-");
+  const iMes=new Date(parseInt(y),parseInt(m)-1,1);
+  const fMes=new Date(parseInt(y),parseInt(m),0);
+  const areasDoMes=areas.filter(a=>{if(!a.DataInicio)return false;const d=new Date(a.DataInicio);return d>=iMes&&d<=fMes;});
+  const mF1=areasDoMes.filter(a=>String(a.Fluxo)==="1");
+  const mF2=areasDoMes.filter(a=>String(a.Fluxo)==="2");
+  const mF3=areasDoMes.filter(a=>String(a.Fluxo)==="3"&&a.Status==="pago");
+  const haF1=mF1.reduce((s,a)=>s+(parseFloat(a.HA)||0),0);
+  const haF2=mF2.reduce((s,a)=>s+(parseFloat(a.HA)||0),0);
+  const cards=[
+    {icon:"🔍",titulo:"Monitoramento — ha",meta:parseFloat(metas["monit-ha"])||0,real:haF1,cor:"#22C55E",unit:"ha"},
+    {icon:"🔍",titulo:"Monitoramento — áreas",meta:parseFloat(metas["monit-areas"])||0,real:mF1.length,cor:"#22C55E",unit:"áreas"},
+    {icon:"🚁",titulo:"Aplicação — ha",meta:parseFloat(metas["aplic-ha"])||0,real:haF2,cor:"#F59E0B",unit:"ha"},
+    {icon:"🚁",titulo:"Aplicação — áreas",meta:parseFloat(metas["aplic-areas"])||0,real:mF2.length,cor:"#F59E0B",unit:"áreas"},
+    {icon:"💰",titulo:"Faturamento — NFs",meta:parseFloat(metas["fat-nfs"])||0,real:mF3.length,cor:"#F97316",unit:"NFs"},
+  ];
+  const cont=document.getElementById("metas-cards");
+  if(cont){
+    cont.innerHTML=cards.map(card=>{
+      const pct=card.meta>0?Math.min(100,Math.round((card.real/card.meta)*100)):0;
+      const cp=pct>=100?"#22C55E":pct>=70?"#F59E0B":pct>=40?"#F97316":"#EF4444";
+      const sm=card.meta===0;
+      return "<div style='background:var(--card);border:1px solid "+card.cor+"22;border-radius:14px;padding:18px;border-top:3px solid "+card.cor+"'>"
+        +"<div style='display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px'>"
+        +"<div><div style='font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px'>"+card.icon+" "+card.titulo+"</div>"
+        +"<div style='font-size:24px;font-weight:800;color:var(--white)'>"+Math.round(card.real).toLocaleString("pt-BR")+"</div>"
+        +"<div style='font-size:11px;color:var(--text3);margin-top:2px'>de "+(sm?"—":Math.round(card.meta).toLocaleString("pt-BR"))+" "+card.unit+"</div></div>"
+        +"<div style='text-align:right'><div style='font-size:26px;font-weight:800;color:"+(sm?"var(--text3)":cp)+"'>"+(sm?"—":pct+"%")+"</div>"
+        +(!sm&&pct>=100?"<div style='font-size:11px;color:#22C55E;font-weight:600'>✓ Meta atingida!</div>":"")
+        +"</div></div>"
+        +(!sm?"<div style='height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:8px'>"
+        +"<div style='height:100%;width:"+pct+"%;background:"+cp+";border-radius:4px;transition:width .6s'></div></div>"
+        +"<div style='display:flex;justify-content:space-between;font-size:10px;color:var(--text3)'>"
+        +"<span>Realizado: "+Math.round(card.real).toLocaleString("pt-BR")+"</span>"
+        +"<span>Faltam: "+Math.max(0,Math.round(card.meta-card.real)).toLocaleString("pt-BR")+"</span></div>"
+        :"<div style='font-size:11px;color:var(--text3)'>Defina a meta abaixo</div>")
+        +"</div>";
+    }).join("");
+  }
+  const cc=document.getElementById("metas-colab");
+  if(cc){
+    const colabs=getColabs();
+    if(areasDoMes.length===0){cc.innerHTML="<div style='color:var(--text3);font-size:13px;padding:16px 0'>Nenhuma área com DataInicio neste mês.</div>";return;}
+    cc.innerHTML=colabs.map(col=>{
+      const mine=areasDoMes.filter(a=>a.Colaborador===col.nome);
+      if(!mine.length)return "";
+      const ha=mine.reduce((s,a)=>s+(parseFloat(a.HA)||0),0);
+      const conc=mine.filter(a=>a.Status==="ok"||a.Status==="pago").length;
+      const pct=Math.round((conc/mine.length)*100);
+      return "<div style='display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)'>"
+        +"<div style='width:36px;height:36px;border-radius:9px;background:"+col.cor+";display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--surface);flex-shrink:0'>"+getIniciais(col.nome)+"</div>"
+        +"<div style='flex:1;min-width:0'>"
+        +"<div style='display:flex;justify-content:space-between;margin-bottom:4px'>"
+        +"<span style='font-weight:600;font-size:13px;color:var(--white)'>"+col.nome+"</span>"
+        +"<span style='font-size:12px;color:var(--text3)'>"+mine.length+" área(s) · "+Math.round(ha).toLocaleString("pt-BR")+" ha</span></div>"
+        +"<div style='height:6px;background:var(--border);border-radius:3px;overflow:hidden'>"
+        +"<div style='height:100%;width:"+pct+"%;background:"+col.cor+";border-radius:3px'></div></div>"
+        +"<div style='font-size:10px;color:var(--text3);margin-top:3px'>"+conc+" concluída(s) de "+mine.length+" — "+pct+"%</div>"
+        +"</div></div>";
+    }).filter(Boolean).join("")||"<div style='color:var(--text3);font-size:13px'>Sem dados para este mês.</div>";
+  }
+};
+
+window.salvarMetas=function(){
+  const mesSel=document.getElementById("metas-mes");
+  const mesKey=mesSel?.value||getMesKey(new Date());
+  const dados={};
+  ["monit-ha","monit-areas","aplic-ha","aplic-areas","fat-valor","fat-nfs"].forEach(k=>{
+    const v=document.getElementById("meta-"+k)?.value;if(v)dados[k]=parseFloat(v);
+  });
+  salvarMetasLocal(mesKey,dados);
+  const ok=document.getElementById("metas-ok");
+  if(ok){ok.textContent="✓ Metas salvas para "+getMesLabel(mesKey);ok.style.display="block";
+    setTimeout(()=>ok.style.display="none",2500);}
+  window.renderMetas();
+};
+
+// ═══ NOVA ÁREA ════════════════════════════════════════════════════════
+window.abrirNovaArea=function(){
+  document.getElementById("modal-titulo").textContent="➕ Cadastrar Nova Área";
+  const etapas=ETAPAS_F1;
+  const hoje=new Date().toISOString().split("T")[0];
+  document.getElementById("modal-corpo").innerHTML=
+    '<div class="form-row">'
+    +'<div class="form-group"><label class="form-label">Produtor Rural</label>'
+    +'<input id="m-produtor" placeholder="Nome do produtor"/></div>'
+    +'<div class="form-group"><label class="form-label">Fazenda</label>'
+    +'<input id="m-fazenda" placeholder="Nome da fazenda"/></div></div>'
+    +'<div class="form-row">'
+    +'<div class="form-group"><label class="form-label">Colaborador</label>'
+    +'<select id="m-colaborador">'+getNomesColabs().map(r=>'<option>'+r+'</option>').join("")+'</select></div>'
+    +'<div class="form-group"><label class="form-label">HA</label>'
+    +'<input type="number" id="m-ha" placeholder="0"/></div></div>'
+    +'<div class="form-row">'
+    +'<div class="form-group"><label class="form-label">Fluxo</label>'
+    +'<select id="m-fluxo" onchange="window.atualizarEtapasModal(this.value)">'
+    +'<option value="1">🔍 Fluxo 1 — Monitoramento</option>'
+    +'<option value="2">🚁 Fluxo 2 — Aplicação</option>'
+    +'<option value="3">💰 Fluxo 3 — Faturamento</option>'
+    +'</select></div>'
+    +'<div class="form-group"><label class="form-label">Etapa Atual</label>'
+    +'<select id="m-etapa">'+etapas.map((e,i)=>'<option value="'+(i+1)+'">'+(i+1)+'. '+e+'</option>').join("")+'</select></div></div>'
+    +'<div class="form-group"><label class="form-label">Status</label>'
+    +'<select id="m-status">'+Object.entries(STATUS).map(([k,v])=>'<option value="'+k+'">'+v.icon+' '+v.label+'</option>').join("")+'</select></div>'
+    +'<div class="form-group"><label class="form-label">Observações</label>'
+    +'<textarea id="m-obs" rows="2" placeholder="Observações iniciais..."></textarea></div>'
+    +'<div class="form-group"><label class="form-label">FalsoZero (Fazenda e Ha)</label>'
+    +'<input id="m-falso" placeholder="Deixe vazio se não houver"/></div>'
+    +'<hr class="form-divider"/>'
+    +'<div class="form-row">'
+    +'<div class="form-group"><label class="form-label">Data Início</label>'
+    +'<input type="date" id="m-inicio" value="'+hoje+'"/></div>'
+    +'<div class="form-group"><label class="form-label">Data Fim / Prazo</label>'
+    +'<input type="date" id="m-fim"/></div></div>'
+    +'<div style="display:flex;gap:8px;margin-top:18px">'
+    +'<button class="btn-ghost" style="flex:1" onclick="window.fecharModal()">Cancelar</button>'
+    +'<button class="btn-primary" style="flex:2" onclick="window.salvarNovaArea()">✓ Cadastrar Área</button></div>'
+    +'<div id="modal-erro" class="alert alert-red" style="display:none;margin-top:10px"></div>'
+    +'<div id="modal-ok" class="alert alert-green" style="display:none;margin-top:10px"></div>';
+  document.getElementById("modal").style.display="flex";
+};
+
+window.salvarNovaArea=async function(){
+  const erroEl=document.getElementById("modal-erro");
+  const okEl=document.getElementById("modal-ok");
+  erroEl.style.display="none";okEl.style.display="none";
+  const fazenda=document.getElementById("m-fazenda").value.trim();
+  if(!fazenda){erroEl.textContent="Informe o nome da fazenda.";erroEl.style.display="block";return;}
+  if(!scriptUrl){erroEl.textContent="Painel não conectado ao Google Sheets.";erroEl.style.display="block";return;}
+  const ini=document.getElementById("m-inicio").value;
+  const fim=document.getElementById("m-fim").value;
+  const tempo=calcTempo(ini,fim);
+  const row=[Date.now(),
+    document.getElementById("m-produtor").value,fazenda,
+    document.getElementById("m-colaborador").value,
+    document.getElementById("m-fluxo").value,
+    document.getElementById("m-etapa").value,
+    document.getElementById("m-status").value,
+    document.getElementById("m-ha").value||0,
+    document.getElementById("m-obs").value,
+    document.getElementById("m-falso").value,
+    ini,fim,tempo!==null?tempo:""];
+  okEl.innerHTML='<span class="loading-spin"></span> Cadastrando...';okEl.style.display="block";
+  try{
+    await fetch(scriptUrl,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({action:"add",row})});
+    okEl.textContent="✓ Área cadastrada! Atualizando painel...";
+    setTimeout(()=>{window.fecharModal();carregarDados(false);},900);
+  }catch{
+    erroEl.textContent="Erro ao cadastrar. Adicione diretamente na planilha.";
+    erroEl.style.display="block";okEl.style.display="none";
+  }
+};
+
 // ═══ WINDOW EXPORTS ════════════════════════════════════════════════════
 window.setAba=window.setAba;
 window.conectar=window.conectar;
@@ -931,6 +1348,11 @@ window.acessarConfig=window.acessarConfig;
 window.confirmarSenha=window.confirmarSenha;
 window.sairConfig=window.sairConfig;
 window.trocarSenha=window.trocarSenha;
+window.abrirNovaArea=window.abrirNovaArea;
+window.salvarNovaArea=window.salvarNovaArea;
+window.renderAgenda=window.renderAgenda;
+window.renderMetas=window.renderMetas;
+window.salvarMetas=window.salvarMetas;
 
 
 // ═══ SISTEMA DE SENHA ════════════════════════════════════════════════
