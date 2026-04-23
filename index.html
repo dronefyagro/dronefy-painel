@@ -286,6 +286,12 @@ button:active{transform:scale(.97)}
 
   <div class="nav-section">
     <div class="nav-label">Planejamento</div>
+    <button class="nav-btn" id="nav-fazendas" onclick="window.setAba('fazendas')">
+      <span class="nav-icon">🏡</span> Fazendas
+    </button>
+    <button class="nav-btn" id="nav-contratos" onclick="window.setAba('contratos')">
+      <span class="nav-icon">📄</span> Contratos
+    </button>
     <button class="nav-btn" id="nav-rotas" onclick="window.setAba('rotas')">
       <span class="nav-icon">📍</span> Rotas
     </button>
@@ -331,6 +337,7 @@ button:active{transform:scale(.97)}
     <!-- TV: abas de navegação -->
     <div class="tv-tabs" id="tv-tabs">
       <button class="tv-tab active" id="tv-tab-painel" onclick="window.tvIrPara('painel')">📊 Painel</button>
+      <button class="tv-tab" id="tv-tab-contratos" onclick="window.tvIrPara('contratos')">📄 Contratos</button>
       <button class="tv-tab" id="tv-tab-rotas" onclick="window.tvIrPara('rotas')">📍 Rotas</button>
       <button class="tv-tab" id="tv-tab-fat" onclick="window.tvIrPara('fat')">💰 Faturamento</button>
       <button class="tv-tab" id="tv-tab-agenda" onclick="window.tvIrPara('agenda')">📅 Agenda</button>
@@ -458,7 +465,7 @@ button:active{transform:scale(.97)}
     <!-- Estrutura -->
     <div class="config-section">
       <div class="config-title" style="color:var(--amber)">📋 Estrutura da planilha</div>
-      <div class="script-box" style="color:var(--teal);font-size:12px;margin-bottom:12px">ID | Produtor Rural | Fazenda | Colaborador | Fluxo | Etapa | Status | HA | Observacoes | FalsoZero | DataInicio | DataFim | TempoExecucao | ArmadilhasInstaladas | DataArmadilhamento | ArmadilhasRecolhidas | DataRecolhimento | Rota | ValorNF</div>
+      <div class="script-box" style="color:var(--teal);font-size:12px;margin-bottom:12px">ID | Produtor Rural | Fazenda | Colaborador | Fluxo | Etapa | Status | HA | Observacoes | FalsoZero | DataInicio | DataFim | TempoExecucao | ArmadilhasInstaladas | DataArmadilhamento | ArmadilhasRecolhidas | DataRecolhimento | Rota | ValorNF | Contrato | Ciclo</div>
       <table class="struct-table"><thead><tr><th>Col</th><th>Nome</th><th>Exemplo</th><th>Por quem</th></tr></thead>
       <tbody id="tabela-estrutura"></tbody></table>
     </div>
@@ -490,6 +497,36 @@ button:active{transform:scale(.97)}
       <div class="config-title" style="color:var(--blue)">💻 Apps Script</div>
       <div class="script-box" id="script-code"></div>
     </div>
+  </div>
+
+  <!-- FAZENDAS -->
+  <div class="content" id="content-fazendas" style="display:none">
+    <div class="section-header">
+      <div>
+        <div class="section-title">🏡 Fazendas</div>
+        <div style="color:var(--text3);font-size:12px;margin-top:3px">Histórico completo por fazenda — 4 ciclos por safra</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="fazendas-busca" placeholder="Buscar fazenda ou produtor..." oninput="window.renderFazendas()"
+          style="width:220px;font-size:12px;padding:7px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);outline:none"/>
+        <button class="btn-ghost" onclick="window.carregarDados(true)" style="font-size:12px;padding:7px 12px">🔄 Atualizar</button>
+      </div>
+    </div>
+    <div id="fazendas-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:20px"></div>
+    <div id="fazendas-lista"></div>
+  </div>
+
+  <!-- CONTRATOS -->
+  <div class="content" id="content-contratos" style="display:none">
+    <div class="section-header">
+      <div>
+        <div class="section-title">📄 Contratos</div>
+        <div style="color:var(--text3);font-size:12px;margin-top:3px">Operações por tipo de contrato — Dronefy · DASA · USC · SPOT</div>
+      </div>
+      <button class="btn-ghost" onclick="window.carregarDados(true)" style="font-size:12px;padding:7px 12px">🔄 Atualizar</button>
+    </div>
+    <div id="contratos-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:24px"></div>
+    <div id="contratos-lista"></div>
   </div>
 
   <!-- ROTAS -->
@@ -635,6 +672,8 @@ const ESTRUTURA=[
   ["Q","DataRecolhimento","2026-04-21","Wesley/Luiz"],
   ["R","Rota","Rota A","Alyce"],
   ["S","ValorNF","1500.00","Andressa"],
+  ["T","Contrato","Dronefy","Alyce"],
+  ["U","Ciclo","1","Alyce"],
 ];
 const APPS_SCRIPT=`function doGet(e) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet()
@@ -727,12 +766,12 @@ window.setAba=function(aba){
     window.acessarConfig();return;
   }
   abaAtual=aba;
-  const abas=["painel","config","rotas","fat","agenda","metas"];
+  const abas=["painel","config","fazendas","contratos","rotas","fat","agenda","metas"];
   abas.forEach(a=>{
     const el=document.getElementById("content-"+a);
     if(el)el.style.display=a===aba?"block":"none";
   });
-  ["painel","config","rotas","fat","agenda","metas"].forEach(a=>{
+  ["painel","config","fazendas","contratos","rotas","fat","agenda","metas"].forEach(a=>{
     const el=document.getElementById("nav-"+a);
     if(el)el.classList.toggle("active",a===aba);
   });
@@ -744,6 +783,8 @@ window.setAba=function(aba){
   const titles={
     painel:"Painel Geral",
     config:"Configurações — Acesso Restrito",
+    fazendas:"Fazendas",
+    contratos:"Contratos",
     rotas:"Rotas de Monitoramento",
     fat:"Faturamento",
     agenda:"Agenda de Monitoramento",
@@ -755,6 +796,8 @@ window.setAba=function(aba){
   if(sw)sw.style.display=aba==="painel"?"block":"none";
   if(bn)bn.style.display=aba==="painel"?"block":"none";
   if(aba==="config")renderConfigUI();
+  if(aba==="fazendas")window.renderFazendas();
+  if(aba==="contratos")window.renderContratos();
   if(aba==="rotas")window.renderRotas();
   if(aba==="fat")window.renderFat();
   if(aba==="agenda")window.renderAgenda();
@@ -963,6 +1006,8 @@ window.renderAreas=function(){
             <span class="fluxo-pill" style="background:${fi.color}18;color:${fi.color};border:1px solid ${fi.color}30">${fi.icon} ${fi.label}</span>
             <span class="badge" style="background:${cor}18;border:1px solid ${cor}33;color:${cor}">${a.Colaborador||"—"}</span>
             ${a.Rota?`<span class="pill" style="color:var(--blue);border-color:#3B82F633">📍 ${a.Rota}</span>`:""}
+            ${a.Ciclo?`<span class="pill" style="color:var(--teal);border-color:#14B8A633">🔄 C${a.Ciclo}</span>`:""}
+            ${a.Contrato?`<span class="pill" style="color:${{"Dronefy":"#22C55E","DASA":"#3B82F6","USC":"#A855F7","SPOT":"#F59E0B"}[a.Contrato]||"#6B8F6B"};border-color:${{"Dronefy":"#22C55E","DASA":"#3B82F6","USC":"#A855F7","SPOT":"#F59E0B"}[a.Contrato]||"#6B8F6B"}33">📄 ${a.Contrato}</span>`:""}
             <span class="pill">${a.HA||0} ha</span>
             ${prazoT?`<span class="pill" style="color:${prazoC};border-color:${prazoC}44">${prazoT}</span>`:""}
             ${tempo!==null?`<span class="pill" style="color:var(--teal);border-color:rgba(20,184,166,.3)">⏱ ${tempo}d</span>`:""}
@@ -1039,8 +1084,20 @@ window.abrirModal=function(enc){
     <div class="form-row">
       <div class="form-group"><label class="form-label">Rota</label>
         <input id="m-rota" placeholder="Ex: Rota A" value="${a.Rota||""}"/></div>
+      <div class="form-group"><label class="form-label">Tipo de Contrato</label>
+        <select id="m-contrato">
+          <option value="">— Selecione —</option>
+          ${["Dronefy","DASA","USC","SPOT"].map(t=>`<option value="${t}" ${a.Contrato===t?"selected":""}>${t}</option>`).join("")}
+        </select></div>
+    </div>
+    <div class="form-row">
       <div class="form-group"><label class="form-label">Valor NF (R$)</label>
         <input type="number" step="0.01" id="m-valor-nf" placeholder="Ex: 1500.00" value="${a.ValorNF||""}"/></div>
+      <div class="form-group"><label class="form-label">Ciclo</label>
+        <select id="m-ciclo">
+          <option value="">— Selecione —</option>
+          ${[1,2,3,4].map(n=>`<option value="${n}" ${String(a.Ciclo)===String(n)?"selected":""}>Ciclo ${n}</option>`).join("")}
+        </select></div>
     </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Fluxo</label>
@@ -1114,12 +1171,14 @@ window.salvarEdicao=async function(enc){
   const dataRec=fluxoVal==="1"?(document.getElementById("m-data-rec")?.value||""):"";
   const rotaVal=document.getElementById("m-rota")?.value||"";
   const valorNFVal=document.getElementById("m-valor-nf")?.value||"";
+  const contratoVal=document.getElementById("m-contrato")?.value||"";
+  const cicloVal=document.getElementById("m-ciclo")?.value||"";
   const row=[a.ID,document.getElementById("m-produtor").value,document.getElementById("m-fazenda").value,
     document.getElementById("m-colaborador").value,fluxoVal,
     document.getElementById("m-etapa").value,document.getElementById("m-status").value,
     document.getElementById("m-ha").value,document.getElementById("m-obs").value,
     document.getElementById("m-falso").value,ini,fim,tempo!==null?tempo:"",
-    armInst,dataArm,armRec,dataRec,rotaVal,valorNFVal];
+    armInst,dataArm,armRec,dataRec,rotaVal,valorNFVal,contratoVal,cicloVal];
   okEl.innerHTML=`<span class="loading-spin"></span> Salvando...`;okEl.style.display="block";
   try{
     await fetch(scriptUrl,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},
@@ -1454,8 +1513,19 @@ window.abrirNovaArea=function(){
     +'<div class="form-row">'
     +'<div class="form-group"><label class="form-label">Rota</label>'
     +'<input id="m-rota" placeholder="Ex: Rota A"/></div>'
+    +'<div class="form-group"><label class="form-label">Tipo de Contrato</label>'
+    +'<select id="m-contrato"><option value="">— Selecione —</option>'
+    +'<option value="Dronefy">Dronefy</option><option value="DASA">DASA</option>'
+    +'<option value="USC">USC</option><option value="SPOT">SPOT</option>'
+    +'</select></div></div>'
+    +'<div class="form-row">'
     +'<div class="form-group"><label class="form-label">Valor NF (R$)</label>'
-    +'<input type="number" step="0.01" id="m-valor-nf" placeholder="Ex: 1500.00"/></div></div>'
+    +'<input type="number" step="0.01" id="m-valor-nf" placeholder="Ex: 1500.00"/></div>'
+    +'<div class="form-group"><label class="form-label">Ciclo</label>'
+    +'<select id="m-ciclo"><option value="">— Selecione —</option>'
+    +'<option value="1">Ciclo 1</option><option value="2">Ciclo 2</option>'
+    +'<option value="3">Ciclo 3</option><option value="4">Ciclo 4</option>'
+    +'</select></div></div>'
     +'<div class="form-row">'
     +'<div class="form-group"><label class="form-label">Fluxo</label>'
     +'<select id="m-fluxo" onchange="window.atualizarEtapasModal(this.value);window.toggleTrapFields(this.value)">'
@@ -1525,7 +1595,9 @@ window.salvarNovaArea=async function(){
     fluxoNovo==="1"?(document.getElementById("m-arm-rec")?.value||""):"",
     fluxoNovo==="1"?(document.getElementById("m-data-rec")?.value||""):"",
     document.getElementById("m-rota")?.value||"",
-    document.getElementById("m-valor-nf")?.value||""];
+    document.getElementById("m-valor-nf")?.value||"",
+    document.getElementById("m-contrato")?.value||"",
+    document.getElementById("m-ciclo")?.value||""];
   okEl.innerHTML='<span class="loading-spin"></span> Cadastrando...';okEl.style.display="block";
   try{
     await fetch(scriptUrl,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},
@@ -1697,6 +1769,303 @@ window.renderFat=function(){
 };
 
 
+
+// ═══ CONTRATOS ════════════════════════════════════════════════════════════
+window.renderContratos=function(){
+  var cardsEl=document.getElementById("contratos-cards");
+  var listaEl=document.getElementById("contratos-lista");
+  if(!cardsEl||!listaEl)return;
+
+  var TIPOS=["Dronefy","DASA","USC","SPOT"];
+  var CORES={"Dronefy":"#22C55E","DASA":"#3B82F6","USC":"#A855F7","SPOT":"#F59E0B"};
+
+  // Agrupar por contrato
+  var mapa={};
+  TIPOS.forEach(function(t){mapa[t]={nome:t,areas:[],totalHa:0,fat:0,fatRecebido:0,atrasos:0,alertas:0,colabs:[]};});
+  mapa["Outros"]={nome:"Outros",areas:[],totalHa:0,fat:0,fatRecebido:0,atrasos:0,alertas:0,colabs:[]};
+
+  areas.forEach(function(a){
+    var tipo=TIPOS.indexOf(a.Contrato)>-1?a.Contrato:"Outros";
+    var g=mapa[tipo];
+    g.areas.push(a);
+    g.totalHa+=parseFloat(a.HA)||0;
+    var vNF=parseFloat(String(a.ValorNF||"0").replace(",","."))||0;
+    if(String(a.Fluxo)==="3"){g.fat+=vNF;if(a.Status==="pago")g.fatRecebido+=vNF;}
+    if(a.Status==="atraso")g.atrasos++;
+    if(a.Status==="alerta")g.alertas++;
+    if(a.Colaborador&&g.colabs.indexOf(a.Colaborador)<0)g.colabs.push(a.Colaborador);
+  });
+
+  var grupos=TIPOS.filter(function(t){return mapa[t].areas.length>0;})
+    .concat(mapa["Outros"].areas.length>0?["Outros"]:[]);
+
+  if(!grupos.length){
+    cardsEl.innerHTML="";
+    listaEl.innerHTML='<div class="empty-state"><div class="empty-icon">📄</div>'
+      +'<div style="color:var(--amber);font-weight:600;margin-bottom:8px">Coluna Contrato não preenchida</div>'
+      +'<div style="color:var(--text3);font-size:13px">Adicione a coluna T com cabeçalho <b>Contrato</b> na planilha.<br>Valores: Dronefy · DASA · USC · SPOT</div></div>';
+    return;
+  }
+
+  function fmtBRL(v){
+    if(!v)return"R$ 0";
+    if(v>=1000)return"R$ "+Math.round(v/1000).toLocaleString("pt-BR")+"k";
+    return"R$ "+v.toLocaleString("pt-BR",{minimumFractionDigits:0,maximumFractionDigits:0});
+  }
+
+  cardsEl.innerHTML=grupos.map(function(tipo){
+    var g=mapa[tipo];
+    var cor=CORES[tipo]||"#6B8F6B";
+    var pend=g.fat-g.fatRecebido;
+    var pctFat=g.fat>0?Math.round((g.fatRecebido/g.fat)*100):0;
+    var f1=g.areas.filter(function(a){return String(a.Fluxo)==="1";}).length;
+    var f2=g.areas.filter(function(a){return String(a.Fluxo)==="2";}).length;
+    var f3=g.areas.filter(function(a){return String(a.Fluxo)==="3";}).length;
+    return '<div style="background:var(--card);border:1px solid '+cor+'33;border-top:3px solid '+cor+';border-radius:14px;padding:18px">'
+      // Header
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'
+      +'<div><div style="font-weight:800;font-size:16px;color:var(--white)">'+tipo+'</div>'
+      +'<div style="font-size:11px;color:var(--text3);margin-top:2px">'+(g.colabs.join(", ")||"—")+'</div></div>'
+      +'<div style="text-align:right"><div style="font-size:24px;font-weight:800;color:'+cor+'">'+g.areas.length+'</div>'
+      +'<div style="font-size:10px;color:var(--text3)">áreas</div></div></div>'
+      // Stats grid
+      +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">'
+      +'<div style="background:var(--bg);border-radius:8px;padding:8px;text-align:center">'
+      +'<div style="font-size:15px;font-weight:700;color:var(--white)">'+Math.round(g.totalHa).toLocaleString("pt-BR")+'</div>'
+      +'<div style="font-size:9px;color:var(--text3)">ha total</div></div>'
+      +'<div style="background:var(--bg);border-radius:8px;padding:8px;text-align:center">'
+      +'<div style="font-size:15px;font-weight:700;color:'+(g.atrasos>0?"var(--red)":"var(--white)")+'">'+g.atrasos+'</div>'
+      +'<div style="font-size:9px;color:var(--text3)">atrasos</div></div>'
+      +'<div style="background:var(--bg);border-radius:8px;padding:8px;text-align:center">'
+      +'<div style="font-size:15px;font-weight:700;color:var(--white)">'+g.alertas+'</div>'
+      +'<div style="font-size:9px;color:var(--text3)">atenção</div></div></div>'
+      // Fluxos
+      +'<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">'
+      +(f1>0?'<span style="font-size:10px;padding:2px 8px;border-radius:5px;background:#22C55E15;color:#22C55E">🔍 '+f1+' monit.</span>':"")
+      +(f2>0?'<span style="font-size:10px;padding:2px 8px;border-radius:5px;background:#F59E0B15;color:#F59E0B">🚁 '+f2+' aplic.</span>':"")
+      +(f3>0?'<span style="font-size:10px;padding:2px 8px;border-radius:5px;background:#F9731615;color:#F97316">💰 '+f3+' fat.</span>':"")
+      +'</div>'
+      // Faturamento
+      +(g.fat>0
+        ?'<div style="background:var(--bg);border-radius:8px;padding:10px;margin-bottom:12px">'
+        +'<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px">'
+        +'<span style="color:var(--text3)">💰 '+fmtBRL(g.fat)+' emitido</span>'
+        +'<span style="color:'+cor+';font-weight:600">'+pctFat+'% recebido</span></div>'
+        +'<div style="display:flex;gap:8px;font-size:10px;margin-bottom:6px">'
+        +'<span style="color:#14B8A6">✓ '+fmtBRL(g.fatRecebido)+'</span>'
+        +(pend>0?'<span style="color:#F59E0B">⏳ '+fmtBRL(pend)+'</span>':"")
+        +'</div>'
+        +'<div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden">'
+        +'<div style="height:100%;width:'+pctFat+'%;background:'+(pctFat>=100?"#22C55E":cor)+';border-radius:3px"></div></div></div>'
+        :"")
+      +'<button onclick="window.filtrarPorContrato(\''+tipo+'\')"'
+      +' style="width:100%;background:'+cor+'15;border:1px solid '+cor+'33;border-radius:8px;'
+      +'padding:7px;color:'+cor+';font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">'
+      +'Ver áreas deste contrato →</button></div>';
+  }).join("");
+
+  // Lista detalhada
+  listaEl.innerHTML=grupos.map(function(tipo){
+    var g=mapa[tipo];
+    var cor=CORES[tipo]||"#6B8F6B";
+    return '<div style="margin-bottom:20px">'
+      +'<div style="font-weight:700;font-size:14px;color:'+cor+';margin-bottom:10px;'
+      +'padding-bottom:8px;border-bottom:1px solid var(--border)">'
+      +'📄 '+tipo+' <span style="font-size:11px;font-weight:400;color:var(--text3)">'+g.areas.length+' área(s) · '+Math.round(g.totalHa).toLocaleString("pt-BR")+' ha</span></div>'
+      +g.areas.map(function(a){
+        var st=STATUS[a.Status]||STATUS.ok;
+        var fi=FLUXO[parseInt(a.Fluxo)]||FLUXO[1];
+        var rc=getCorColab(a.Colaborador);
+        var enc=encodeURIComponent(JSON.stringify(a));
+        var vNF=parseFloat(String(a.ValorNF||"0").replace(",","."))||0;
+        return '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;'
+          +'padding:12px 14px;margin-bottom:6px;display:flex;align-items:center;gap:10px;cursor:pointer"'
+          +' onclick="window.abrirModal(\''+enc+'\')">'
+          +'<div style="flex:1;min-width:0">'
+          +'<div style="color:var(--white);font-weight:600;font-size:13px">'+(a.Fazenda||"—")+'</div>'
+          +(a["Produtor Rural"]?'<div style="color:var(--text3);font-size:11px">👤 '+a["Produtor Rural"]+'</div>':"")
+          +'</div>'
+          +'<div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end">'
+          +'<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:'+fi.color+'15;color:'+fi.color+'">'+fi.icon+' '+fi.label+'</span>'
+          +'<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:'+rc+'15;color:'+rc+'">'+(a.Colaborador||"—")+'</span>'
+          +'<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:var(--border);color:var(--text3)">'+(a.HA||0)+' ha</span>'
+          +'<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:'+st.color+'15;color:'+st.color+'">'+st.icon+' '+st.label+'</span>'
+          +(vNF>0?'<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:#F9731615;color:#F97316">R$'+vNF.toLocaleString("pt-BR",{minimumFractionDigits:0,maximumFractionDigits:0})+'</span>':"")
+          +'</div></div>';
+      }).join("")+'</div>';
+  }).join("");
+};
+
+window.filtrarPorContrato=function(contrato){
+  window.setAba("painel");
+  var s=document.getElementById("search-input");
+  if(s){s.value=contrato;window.renderAreas();}
+};
+
+
+
+// ═══ FAZENDAS ════════════════════════════════════════════════════════════
+window.renderFazendas=function(){
+  var listaEl=document.getElementById("fazendas-lista");
+  var kpisEl=document.getElementById("fazendas-kpis");
+  if(!listaEl||!kpisEl)return;
+
+  var busca=((document.getElementById("fazendas-busca")||{}).value||"").toLowerCase().trim();
+
+  // Agrupar por chave: "Produtor|Fazenda"
+  var mapaFaz={};
+  areas.forEach(function(a){
+    var key=(a["Produtor Rural"]||"")+"|||"+(a.Fazenda||"");
+    if(!mapaFaz[key])mapaFaz[key]={
+      produtor:a["Produtor Rural"]||"—",
+      fazenda:a.Fazenda||"—",
+      ha:parseFloat(a.HA)||0,
+      colaborador:a.Colaborador||"",
+      rota:a.Rota||"",
+      contrato:a.Contrato||"",
+      ciclos:{},   // ciclo -> {f1,f2,f3}
+      linhas:[]
+    };
+    var faz=mapaFaz[key];
+    faz.linhas.push(a);
+    var ciclo=parseInt(a.Ciclo)||0;
+    if(ciclo>0){
+      if(!faz.ciclos[ciclo])faz.ciclos[ciclo]={f1:null,f2:null,f3:null};
+      var f=String(a.Fluxo);
+      if(f==="1")faz.ciclos[ciclo].f1=a;
+      else if(f==="2")faz.ciclos[ciclo].f2=a;
+      else if(f==="3")faz.ciclos[ciclo].f3=a;
+    }
+  });
+
+  var fazendas=Object.values(mapaFaz).sort(function(a,b){
+    return (a.produtor+a.fazenda).localeCompare(b.produtor+b.fazenda);
+  });
+
+  // Aplicar busca
+  if(busca){
+    fazendas=fazendas.filter(function(f){
+      return f.fazenda.toLowerCase().includes(busca)||f.produtor.toLowerCase().includes(busca);
+    });
+  }
+
+  // KPIs
+  var totalFaz=Object.keys(mapaFaz).length;
+  var comCiclo=Object.values(mapaFaz).filter(function(f){return Object.keys(f.ciclos).length>0;}).length;
+  var semCiclo=totalFaz-comCiclo;
+  var totalLinhas=areas.length;
+  var totalHaUniq=Object.values(mapaFaz).reduce(function(s,f){return s+f.ha;},0);
+
+  kpisEl.innerHTML=[
+    {icon:"🏡",val:totalFaz,label:"Fazendas únicas",cor:"#3B82F6"},
+    {icon:"🌾",val:Math.round(totalHaUniq).toLocaleString("pt-BR")+" ha",label:"Área total",cor:"#14B8A6"},
+    {icon:"🔄",val:comCiclo,label:"Com ciclo definido",cor:"#22C55E"},
+    {icon:"⚠️",val:semCiclo,label:"Sem ciclo",cor:"#F59E0B"},
+    {icon:"📋",val:totalLinhas,label:"Total de serviços",cor:"#A855F7"},
+  ].map(function(k){
+    return '<div style="background:var(--card);border:1px solid '+k.cor+'22;border-top:3px solid '+k.cor+'33;border-radius:12px;padding:14px;text-align:center">'
+      +'<div style="font-size:16px;margin-bottom:4px">'+k.icon+'</div>'
+      +'<div style="font-size:20px;font-weight:800;color:'+k.cor+'">'+k.val+'</div>'
+      +'<div style="font-size:10px;color:var(--text3);margin-top:2px">'+k.label+'</div></div>';
+  }).join("");
+
+  if(!fazendas.length){
+    listaEl.innerHTML='<div class="empty-state"><div class="empty-icon">🏡</div>'
+      +(busca?'<div>Nenhuma fazenda encontrada para "'+busca+'"</div>'
+             :'<div style="color:var(--amber);font-weight:600">Nenhuma área cadastrada</div>')
+      +'</div>';
+    return;
+  }
+
+  var CORES_CONT={"Dronefy":"#22C55E","DASA":"#3B82F6","USC":"#A855F7","SPOT":"#F59E0B"};
+  var STATUS_CICLO={
+    ok:    {icon:"✓",cor:"#22C55E",bg:"rgba(34,197,94,.15)"},
+    pago:  {icon:"💚",cor:"#14B8A6",bg:"rgba(20,184,166,.15)"},
+    atraso:{icon:"⚠",cor:"#EF4444",bg:"rgba(239,68,68,.15)"},
+    alerta:{icon:"⚡",cor:"#F59E0B",bg:"rgba(245,158,11,.15)"},
+    aguard:{icon:"⏳",cor:"#3B82F6",bg:"rgba(59,130,246,.15)"},
+    falso: {icon:"↩",cor:"#A855F7",bg:"rgba(168,85,247,.15)"},
+    null:  {icon:"—",cor:"#5A7A5A",bg:"rgba(90,122,90,.1)"},
+  };
+
+  function cicloStatus(fluxoObj){
+    if(!fluxoObj)return STATUS_CICLO["null"];
+    return STATUS_CICLO[fluxoObj.Status]||STATUS_CICLO["null"];
+  }
+
+  listaEl.innerHTML=fazendas.map(function(faz){
+    var rc=getCorColab(faz.colaborador);
+    var cc=CORES_CONT[faz.contrato]||"#6B8F6B";
+    var temCiclos=Object.keys(faz.ciclos).length>0;
+
+    // Ciclos timeline
+    var ciclosHtml="";
+    if(temCiclos){
+      ciclosHtml='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px">';
+      [1,2,3,4].forEach(function(n){
+        var ciclo=faz.ciclos[n];
+        var f1=ciclo?ciclo.f1:null;
+        var f2=ciclo?ciclo.f2:null;
+        var f3=ciclo?ciclo.f3:null;
+        var s1=cicloStatus(f1);
+        var s2=cicloStatus(f2);
+        var s3=cicloStatus(f3);
+        var ativo=!!ciclo;
+        var vNF=0;
+        if(f3&&f3.ValorNF)vNF+=parseFloat(String(f3.ValorNF).replace(",","."))||0;
+        if(f2&&f2.ValorNF)vNF+=parseFloat(String(f2.ValorNF).replace(",","."))||0;
+        if(f1&&f1.ValorNF)vNF+=parseFloat(String(f1.ValorNF).replace(",","."))||0;
+
+        ciclosHtml+='<div style="background:var(--bg);border-radius:8px;padding:8px;border:1px solid '+(ativo?s1.cor+"44":"var(--border)")+'">'
+          +'<div style="font-size:10px;font-weight:700;color:'+(ativo?"var(--white)":"var(--text3)")+';margin-bottom:5px;text-align:center">C'+n+'</div>'
+          // F1
+          +'<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px">'
+          +'<span style="font-size:9px;color:var(--text3);width:20px">F1</span>'
+          +'<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:'+s1.bg+';color:'+s1.cor+'">'+s1.icon+'</span>'
+          +(f1&&f1.IC?'<span style="font-size:9px;color:var(--text3)">IC:'+f1.IC+'</span>':"")
+          +'</div>'
+          // F2
+          +'<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px">'
+          +'<span style="font-size:9px;color:var(--text3);width:20px">F2</span>'
+          +'<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:'+s2.bg+';color:'+s2.cor+'">'+s2.icon+'</span>'
+          +'</div>'
+          // F3 NF
+          +'<div style="display:flex;align-items:center;gap:4px">'
+          +'<span style="font-size:9px;color:var(--text3);width:20px">NF</span>'
+          +'<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:'+s3.bg+';color:'+s3.cor+'">'+s3.icon+'</span>'
+          +(vNF>0?'<span style="font-size:9px;color:#F97316">R$'+Math.round(vNF/1000)+'k</span>':"")
+          +'</div>'
+          +'</div>';
+      });
+      ciclosHtml+='</div>';
+    } else {
+      // No ciclos - show services without cycle
+      var linhasSemCiclo=faz.linhas.filter(function(l){return !l.Ciclo||l.Ciclo===""||l.Ciclo==="0";});
+      if(linhasSemCiclo.length>0){
+        ciclosHtml='<div style="margin-top:8px;padding:6px 10px;background:var(--bg);border-radius:6px;border:1px solid #F59E0B33">'
+          +'<span style="font-size:11px;color:#F59E0B">⚠ '+linhasSemCiclo.length+' serviço(s) sem ciclo definido — preencha a coluna Ciclo na planilha</span></div>';
+      }
+    }
+
+    return '<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px">'
+      // Header
+      +'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:6px">'
+      +'<div style="flex:1;min-width:0">'
+      +'<div style="color:var(--white);font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+faz.fazenda+'</div>'
+      +'<div style="color:var(--text3);font-size:11px;margin-top:2px">👤 '+faz.produtor+'</div>'
+      +'</div>'
+      +'<div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;flex-shrink:0">'
+      +(faz.colaborador?'<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:'+rc+'15;color:'+rc+'">'+faz.colaborador+'</span>':"")
+      +'<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:var(--border);color:var(--text3)">'+faz.ha+' ha</span>'
+      +(faz.contrato?'<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:'+cc+'15;color:'+cc+'">📄 '+faz.contrato+'</span>':"")
+      +(faz.rota?'<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:#3B82F615;color:#3B82F6">📍 '+faz.rota+'</span>':"")
+      +'</div></div>'
+      +ciclosHtml
+      +'</div>';
+  }).join("");
+};
+
+
 // ═══ WINDOW EXPORTS ════════════════════════════════════════════════════
 window.setAba=window.setAba;
 window.conectar=window.conectar;
@@ -1724,6 +2093,9 @@ window.salvarMetas=window.salvarMetas;
 window.renderRotas=window.renderRotas;
 window.filtrarPorRota=window.filtrarPorRota;
 window.renderFat=window.renderFat;
+window.renderContratos=window.renderContratos;
+window.renderFazendas=window.renderFazendas;
+window.filtrarPorContrato=window.filtrarPorContrato;
 window.tvIrPara=window.tvIrPara;
 window.tvPausar=window.tvPausar;
 
@@ -1834,8 +2206,8 @@ window.trocarSenha=function(){
 
 
 // ═══ MODO TV ═══════════════════════════════════════════════════════════
-const TV_ABAS = ["painel","rotas","fat","agenda"];
-const TV_LABELS = {painel:"Painel Geral",rotas:"Rotas",agenda:"Agenda",fat:"Faturamento"};
+const TV_ABAS = ["painel","contratos","rotas","fat","agenda"];
+const TV_LABELS = {painel:"Painel Geral",contratos:"Contratos",rotas:"Rotas",agenda:"Agenda",fat:"Faturamento"};
 let tvAtivo = false;
 let tvIntervalo = 30; // segundos por aba (configurável)
 let tvAbaIdx = 0;
