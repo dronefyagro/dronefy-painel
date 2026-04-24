@@ -1490,19 +1490,43 @@ function cardMetaHtml(titulo,icon,cor,real,meta,unit){
     +"</div>";
 }
 
-window.salvarMetasColab=function(nome){
-  const mesSel=document.getElementById("metas-mes");
-  const mesKey=mesSel?.value||getMesKey(new Date());
+window.salvarMetasColab=function(nome,fromConfig){
+  // Determine active month selector
+  const configSel=document.getElementById("config-metas-mes");
+  const metasSel=document.getElementById("metas-mes");
+  const mesSel=fromConfig?configSel:metasSel;
+  const mesKey=(mesSel?.value)||getMesKey(new Date());
+
+  // Read from the correct section (config or metas)
+  const prefix=fromConfig?"cfg-mc-":"mc-";
+  const nomeId=nome.replace(/\s+/g,"_");
+  const monitEl=document.getElementById(prefix+nomeId+"-monit-ha");
+  const aplicEl=document.getElementById(prefix+nomeId+"-aplic-ha");
   const dados={
-    "monit-ha":parseFloat(document.getElementById("mc-"+nome+"-monit-ha")?.value)||0,
-    "aplic-ha":parseFloat(document.getElementById("mc-"+nome+"-aplic-ha")?.value)||0,
+    "monit-ha":parseFloat(monitEl?.value)||0,
+    "aplic-ha":parseFloat(aplicEl?.value)||0,
   };
+  if(dados["monit-ha"]===0&&dados["aplic-ha"]===0){
+    // Try the other prefix as fallback
+    const altPrefix=fromConfig?"mc-":"cfg-mc-";
+    const m2=document.getElementById(altPrefix+nomeId+"-monit-ha");
+    const a2=document.getElementById(altPrefix+nomeId+"-aplic-ha");
+    if(m2?.value)dados["monit-ha"]=parseFloat(m2.value)||0;
+    if(a2?.value)dados["aplic-ha"]=parseFloat(a2.value)||0;
+  }
   salvarMetasColabLocal(nome,mesKey,dados);
-  const okEl=document.getElementById("mc-"+nome+"-ok");
-  if(okEl){okEl.style.display="block";okEl.textContent="✓ Meta de "+nome+" salva";
-    setTimeout(()=>okEl.style.display="none",2000);}
+  // Show feedback on all matching ok elements
+  ["mc-","cfg-mc-"].forEach(function(p){
+    const okEl=document.getElementById(p+nomeId+"-ok");
+    if(okEl){okEl.style.display="block";okEl.textContent="✓ Meta de "+nome+" salva";
+      setTimeout(function(){okEl.style.display="none";},2000);}
+  });
+  // Sync month selectors
+  if(configSel&&metasSel){
+    if(fromConfig)metasSel.value=mesKey;
+    else configSel.value=mesKey;
+  }
   window.renderMetas();
-  // Re-render config metas inputs to reflect saved values
   window.renderConfigMetas();
 };
 
@@ -1585,22 +1609,6 @@ window.renderMetas=function(){
       +cardMetaHtml("Monitoramento — ha","🔍","#22C55E",haMonit,metaMonitHa,"ha")
       +cardMetaHtml("Aplicação — ha","🚁","#F59E0B",haAplic,metaAplicHa,"ha")
       +"</div>"
-      // Definir meta (só para Wesley e Luiz)
-      +(temMeta
-        ?"<div style='border-top:1px solid var(--border);padding-top:14px'>"
-        +"<div style='font-size:12px;font-weight:600;color:var(--text3);margin-bottom:10px'>✏️ Definir metas de "+col.nome+" para "+getMesLabel(mesKey)+"</div>"
-        +"<div style='display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px'>"
-        +"<div><label style='font-size:10px;font-weight:600;color:#22C55E;display:block;margin-bottom:4px;text-transform:uppercase'>🔍 Monit. (ha)</label>"
-        +"<input type='number' id='mc-"+nomeId+"-monit-ha' placeholder='Ex: 4000' value='"+(mc["monit-ha"]||"")+"' style='width:100%'/></div>"
-        +"<div><label style='font-size:10px;font-weight:600;color:#F59E0B;display:block;margin-bottom:4px;text-transform:uppercase'>🚁 Aplic. (ha)</label>"
-        +"<input type='number' id='mc-"+nomeId+"-aplic-ha' placeholder='Ex: 2500' value='"+(mc["aplic-ha"]||"")+"' style='width:100%'/></div>"
-        +"</div>"
-        +"<div style='display:flex;align-items:center;gap:8px'>"
-        +"<button onclick='window.salvarMetasColab(\"'+col.nome+'\")'" + " class='btn-primary' style='font-size:12px;padding:7px 16px'>"
-        +"💾 Salvar meta de "+col.nome+"</button>"
-        +"<span id='mc-"+nomeId+"-ok' style='display:none;font-size:12px;color:#22C55E;font-weight:600'></span>"
-        +"</div></div>"
-        :"")
       +"</div>";
   }).join("");
 };
@@ -2238,13 +2246,13 @@ window.renderConfigMetas=function(){
       +"<span style='font-weight:700;font-size:13px;color:var(--white)'>"+col.nome+"</span></div>"
       +"<div style='display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px'>"
       +"<div><label style='font-size:10px;font-weight:600;color:#22C55E;display:block;margin-bottom:4px'>🔍 Monit. (ha)</label>"
-      +"<input type='number' id='mc-"+nomeId+"-monit-ha' placeholder='Ex: 4000' value='"+(mc["monit-ha"]||"")+"'/></div>"
+      +"<input type='number' id='cfg-mc-"+nomeId+"-monit-ha' placeholder='Ex: 4000' value='"+(mc["monit-ha"]||"")+"'/></div>"
       +"<div><label style='font-size:10px;font-weight:600;color:#F59E0B;display:block;margin-bottom:4px'>🚁 Aplic. (ha)</label>"
-      +"<input type='number' id='mc-"+nomeId+"-aplic-ha' placeholder='Ex: 2500' value='"+(mc["aplic-ha"]||"")+"'/></div>"
+      +"<input type='number' id='cfg-mc-"+nomeId+"-aplic-ha' placeholder='Ex: 2500' value='"+(mc["aplic-ha"]||"")+"'/></div>"
       +"</div>"
       +"<div style='display:flex;align-items:center;gap:8px'>"
-      +"<button onclick='window.salvarMetasColab(\"'+col.nome+'\")'" + " class='btn-primary' style='font-size:11px;padding:6px 12px'>💾 Salvar</button>"
-      +"<span id='mc-"+nomeId+"-ok' style='display:none;font-size:11px;color:#22C55E;font-weight:600'>✓ Salvo</span>"
+      +"<button onclick='window.salvarMetasColab(\"'+col.nome+'\",true)'" + " class='btn-primary' style='font-size:11px;padding:6px 12px'>💾 Salvar</button>"
+      +"<span id='cfg-mc-"+nomeId+"-ok' style='display:none;font-size:11px;color:#22C55E;font-weight:600'>✓ Salvo</span>"
       +"</div></div>";
   }).join("");
 };
