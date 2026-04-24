@@ -493,6 +493,43 @@ button:active{transform:scale(.97)}
     </div>
 
     <!-- Script -->
+    <!-- METAS NAS CONFIGURAÇÕES -->
+    <div class="config-section" id="config-metas-section">
+      <div class="config-title" style="color:var(--green3)">🎯 Definir Metas Mensais</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px">
+        <select id="config-metas-mes" onchange="window.renderConfigMetas()" style="width:180px;font-size:12px;padding:7px 10px">
+        </select>
+        <span style="font-size:12px;color:var(--text3)" id="config-metas-periodo"></span>
+      </div>
+
+      <!-- Metas gerais -->
+      <div style="margin-bottom:20px">
+        <div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">📊 Metas Gerais da Equipe</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:12px">
+          <div><label style="font-size:11px;font-weight:600;color:var(--text3);display:block;margin-bottom:5px">🔍 Monitoramento (ha)</label>
+            <input type="number" id="meta-monit-ha" placeholder="Ex: 8000"/></div>
+          <div><label style="font-size:11px;font-weight:600;color:var(--text3);display:block;margin-bottom:5px">🔍 Monitoramento (áreas)</label>
+            <input type="number" id="meta-monit-areas" placeholder="Ex: 50"/></div>
+          <div><label style="font-size:11px;font-weight:600;color:var(--text3);display:block;margin-bottom:5px">🚁 Aplicação (ha)</label>
+            <input type="number" id="meta-aplic-ha" placeholder="Ex: 5000"/></div>
+          <div><label style="font-size:11px;font-weight:600;color:var(--text3);display:block;margin-bottom:5px">🚁 Aplicação (áreas)</label>
+            <input type="number" id="meta-aplic-areas" placeholder="Ex: 30"/></div>
+          <div><label style="font-size:11px;font-weight:600;color:var(--text3);display:block;margin-bottom:5px">💰 Faturamento (R$)</label>
+            <input type="number" id="meta-fat-valor" placeholder="Ex: 45000"/></div>
+          <div><label style="font-size:11px;font-weight:600;color:var(--text3);display:block;margin-bottom:5px">💰 NFs Emitidas</label>
+            <input type="number" id="meta-fat-nfs" placeholder="Ex: 25"/></div>
+        </div>
+        <button class="btn-primary" onclick="window.salvarMetas()" style="font-size:12px;padding:7px 16px">💾 Salvar Metas Gerais</button>
+        <div id="metas-ok" class="alert alert-green" style="display:none;margin-top:10px"></div>
+      </div>
+
+      <!-- Metas individuais Wesley e Luiz -->
+      <div style="border-top:1px solid var(--border);padding-top:16px">
+        <div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">👤 Metas Individuais — Wesley e Luiz</div>
+        <div id="config-metas-colab" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px"></div>
+      </div>
+    </div>
+
     <div class="config-section">
       <div class="config-title" style="color:var(--blue)">💻 Apps Script</div>
       <div class="script-box" id="script-code"></div>
@@ -591,35 +628,13 @@ button:active{transform:scale(.97)}
       </div>
       <div style="display:flex;gap:8px;align-items:center">
         <select id="metas-mes" onchange="window.renderMetas()" style="width:180px;font-size:12px;padding:7px 10px"></select>
-        <button class="btn-primary" onclick="window.salvarMetas()" style="font-size:12px;padding:7px 14px">💾 Salvar Metas</button>
+        <button class="btn-ghost" onclick="window.setAba('config')" style="font-size:12px;padding:7px 12px">⚙️ Definir Metas</button>
       </div>
     </div>
     <!-- Cards gerais -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:24px" id="metas-cards"></div>
-
-    <!-- Metas por colaborador -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:20px" id="metas-cards"></div>
+    <!-- Cards por colaborador -->
     <div id="metas-colab-section"></div>
-
-    <!-- Definir metas gerais -->
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px">
-      <div style="font-weight:700;font-size:14px;color:var(--white);margin-bottom:4px">✏️ Metas Gerais do Mês</div>
-      <div style="font-size:12px;color:var(--text3);margin-bottom:16px">Metas consolidadas da equipe</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
-        <div><label style="font-size:11px;font-weight:600;color:var(--text3);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">🔍 Monitoramento (ha)</label>
-          <input type="number" id="meta-monit-ha" placeholder="Ex: 8000"/></div>
-        <div><label style="font-size:11px;font-weight:600;color:var(--text3);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">🔍 Monitoramento (áreas)</label>
-          <input type="number" id="meta-monit-areas" placeholder="Ex: 50"/></div>
-        <div><label style="font-size:11px;font-weight:600;color:var(--text3);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">🚁 Aplicação (ha)</label>
-          <input type="number" id="meta-aplic-ha" placeholder="Ex: 5000"/></div>
-        <div><label style="font-size:11px;font-weight:600;color:var(--text3);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">🚁 Aplicação (áreas)</label>
-          <input type="number" id="meta-aplic-areas" placeholder="Ex: 30"/></div>
-        <div><label style="font-size:11px;font-weight:600;color:var(--text3);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">💰 Faturamento (R$)</label>
-          <input type="number" id="meta-fat-valor" placeholder="Ex: 45000"/></div>
-        <div><label style="font-size:11px;font-weight:600;color:var(--text3);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">💰 NFs Emitidas</label>
-          <input type="number" id="meta-fat-nfs" placeholder="Ex: 25"/></div>
-      </div>
-      <div id="metas-ok" class="alert alert-green" style="display:none;margin-top:14px"></div>
-    </div>
   </div>
 
 </div>
@@ -1281,6 +1296,8 @@ window.editarCorColab=function(i){
 
 // ═══ CONFIG UI ═════════════════════════════════════════════════════════
 function renderConfigUI(){
+  // Render metas config section
+  window.renderConfigMetas();
   const tbody=document.getElementById("tabela-estrutura");
   if(tbody&&!tbody.innerHTML){
     ESTRUTURA.forEach(([col,nome,ex,resp])=>{
@@ -1485,6 +1502,8 @@ window.salvarMetasColab=function(nome){
   if(okEl){okEl.style.display="block";okEl.textContent="✓ Meta de "+nome+" salva";
     setTimeout(()=>okEl.style.display="none",2000);}
   window.renderMetas();
+  // Re-render config metas inputs to reflect saved values
+  window.renderConfigMetas();
 };
 
 window.renderMetas=function(){
@@ -1598,6 +1617,9 @@ window.salvarMetas=function(){
   if(ok){ok.textContent="✓ Metas gerais salvas para "+getMesLabel(mesKey);ok.style.display="block";
     setTimeout(()=>ok.style.display="none",2500);}
   window.renderMetas();
+  // Sync metas-mes se estiver na aba Metas
+  const metasMes=document.getElementById("metas-mes");
+  if(metasMes)metasMes.value=mesKey;
 };
 
 // ═══ NOVA ÁREA ════════════════════════════════════════════════════════
@@ -2172,6 +2194,62 @@ window.renderFazendas=function(){
 };
 
 
+
+// ═══ CONFIG METAS ════════════════════════════════════════════════════════
+window.renderConfigMetas=function(){
+  const hoje=new Date();
+  const sel=document.getElementById("config-metas-mes");
+  if(sel&&!sel.dataset.init){
+    sel.dataset.init="1";
+    let opts="";
+    for(let i=-3;i<=2;i++){
+      const d=new Date(hoje.getFullYear(),hoje.getMonth()+i,1);
+      const k=getMesKey(d);
+      opts+="<option value='"+k+"'"+(i===0?" selected":"")+">"+(getMesLabel(k))+"</option>";
+    }
+    sel.innerHTML=opts;
+  }
+  const mesKey=sel?.value||getMesKey(hoje);
+  const periodo=document.getElementById("config-metas-periodo");
+  if(periodo)periodo.textContent=getMesLabel(mesKey);
+
+  // Preencher inputs gerais
+  const metas=getMetas(mesKey);
+  ["monit-ha","monit-areas","aplic-ha","aplic-areas","fat-valor","fat-nfs"].forEach(k=>{
+    const el=document.getElementById("meta-"+k);if(el)el.value=metas[k]||"";
+  });
+
+  // Sincronizar seletor da aba Metas
+  const metasMes=document.getElementById("metas-mes");
+  if(metasMes)metasMes.value=mesKey;
+
+  // Cards individuais Wesley e Luiz
+  const colabEl=document.getElementById("config-metas-colab");
+  if(!colabEl)return;
+  const COLAB_META=["Wesley","Luiz"];
+  const colabs=getColabs().filter(col=>COLAB_META.indexOf(col.nome)>-1);
+  colabEl.innerHTML=colabs.map(col=>{
+    const mc=getMetasColab(col.nome,mesKey);
+    const cor=col.cor||"#22C55E";
+    const nomeId=col.nome.replace(/\s+/g,"_");
+    return "<div style='background:var(--bg);border:1px solid "+cor+"33;border-radius:10px;padding:14px'>"
+      +"<div style='display:flex;align-items:center;gap:8px;margin-bottom:12px'>"
+      +"<div style='width:32px;height:32px;border-radius:8px;background:"+cor+";display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#0A140A'>"+getIniciais(col.nome)+"</div>"
+      +"<span style='font-weight:700;font-size:13px;color:var(--white)'>"+col.nome+"</span></div>"
+      +"<div style='display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px'>"
+      +"<div><label style='font-size:10px;font-weight:600;color:#22C55E;display:block;margin-bottom:4px'>🔍 Monit. (ha)</label>"
+      +"<input type='number' id='mc-"+nomeId+"-monit-ha' placeholder='Ex: 4000' value='"+(mc["monit-ha"]||"")+"'/></div>"
+      +"<div><label style='font-size:10px;font-weight:600;color:#F59E0B;display:block;margin-bottom:4px'>🚁 Aplic. (ha)</label>"
+      +"<input type='number' id='mc-"+nomeId+"-aplic-ha' placeholder='Ex: 2500' value='"+(mc["aplic-ha"]||"")+"'/></div>"
+      +"</div>"
+      +"<div style='display:flex;align-items:center;gap:8px'>"
+      +"<button onclick='window.salvarMetasColab(\"'+col.nome+'\")'" + " class='btn-primary' style='font-size:11px;padding:6px 12px'>💾 Salvar</button>"
+      +"<span id='mc-"+nomeId+"-ok' style='display:none;font-size:11px;color:#22C55E;font-weight:600'>✓ Salvo</span>"
+      +"</div></div>";
+  }).join("");
+};
+
+
 // ═══ WINDOW EXPORTS ════════════════════════════════════════════════════
 window.setAba=window.setAba;
 window.conectar=window.conectar;
@@ -2197,6 +2275,7 @@ window.renderAgenda=window.renderAgenda;
 window.renderMetas=window.renderMetas;
 window.salvarMetas=window.salvarMetas;
 window.salvarMetasColab=window.salvarMetasColab;
+window.renderConfigMetas=window.renderConfigMetas;
 window.renderRotas=window.renderRotas;
 window.filtrarPorRota=window.filtrarPorRota;
 window.renderFat=window.renderFat;
