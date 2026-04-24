@@ -1490,6 +1490,12 @@ function cardMetaHtml(titulo,icon,cor,real,meta,unit){
     +"</div>";
 }
 
+// Helper para botões — evita problema de aspas aninhadas no onclick
+window.salvarMetasColabBtn=function(el){
+  var nome=el.getAttribute("data-nome");
+  var fromConfig=el.getAttribute("data-cfg")==="1";
+  window.salvarMetasColab(nome,fromConfig);
+};
 window.salvarMetasColab=function(nome,fromConfig){
   // Determine active month selector
   const configSel=document.getElementById("config-metas-mes");
@@ -2251,7 +2257,7 @@ window.renderConfigMetas=function(){
       +"<input type='number' id='cfg-mc-"+nomeId+"-aplic-ha' placeholder='Ex: 2500' value='"+(mc["aplic-ha"]||"")+"'/></div>"
       +"</div>"
       +"<div style='display:flex;align-items:center;gap:8px'>"
-      +"<button onclick='window.salvarMetasColab(\"'+col.nome+'\",true)'" + " class='btn-primary' style='font-size:11px;padding:6px 12px'>💾 Salvar</button>"
+      +"<button onclick='window.salvarMetasColabBtn(this)' data-nome='"+col.nome+"' data-cfg='1' class='btn-primary' style='font-size:11px;padding:6px 12px'>💾 Salvar</button>"
       +"<span id='cfg-mc-"+nomeId+"-ok' style='display:none;font-size:11px;color:#22C55E;font-weight:600'>✓ Salvo</span>"
       +"</div></div>";
   }).join("");
@@ -2283,6 +2289,7 @@ window.renderAgenda=window.renderAgenda;
 window.renderMetas=window.renderMetas;
 window.salvarMetas=window.salvarMetas;
 window.salvarMetasColab=window.salvarMetasColab;
+window.salvarMetasColabBtn=window.salvarMetasColabBtn;
 window.renderConfigMetas=window.renderConfigMetas;
 window.renderRotas=window.renderRotas;
 window.filtrarPorRota=window.filtrarPorRota;
