@@ -594,10 +594,17 @@ button:active{transform:scale(.97)}
         <button class="btn-primary" onclick="window.salvarMetas()" style="font-size:12px;padding:7px 14px">💾 Salvar Metas</button>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:24px" id="metas-cards"></div>
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:20px">
-      <div style="font-weight:700;font-size:14px;color:var(--white);margin-bottom:16px">✏️ Definir Metas do Mês</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px">
+    <!-- Cards gerais -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:24px" id="metas-cards"></div>
+
+    <!-- Metas por colaborador -->
+    <div id="metas-colab-section"></div>
+
+    <!-- Definir metas gerais -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px">
+      <div style="font-weight:700;font-size:14px;color:var(--white);margin-bottom:4px">✏️ Metas Gerais do Mês</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:16px">Metas consolidadas da equipe</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
         <div><label style="font-size:11px;font-weight:600;color:var(--text3);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">🔍 Monitoramento (ha)</label>
           <input type="number" id="meta-monit-ha" placeholder="Ex: 8000"/></div>
         <div><label style="font-size:11px;font-weight:600;color:var(--text3);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">🔍 Monitoramento (áreas)</label>
@@ -612,10 +619,6 @@ button:active{transform:scale(.97)}
           <input type="number" id="meta-fat-nfs" placeholder="Ex: 25"/></div>
       </div>
       <div id="metas-ok" class="alert alert-green" style="display:none;margin-top:14px"></div>
-    </div>
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px">
-      <div style="font-weight:700;font-size:14px;color:var(--white);margin-bottom:16px">📊 Progresso por Colaborador</div>
-      <div id="metas-colab"></div>
     </div>
   </div>
 
@@ -855,10 +858,35 @@ function renderPainel(){
   renderKPIs();renderTeam();renderAreas();renderAlertas();
 }
 
+// ─── helper: fazendas únicas (deduplicado por Produtor+Fazenda) ─────────
+function getFazendasUnicas(lista){
+  const visto=new Set();
+  return (lista||areas).filter(a=>{
+    const k=(a["Produtor Rural"]||"")+"|||"+(a.Fazenda||"");
+    if(visto.has(k))return false;
+    visto.add(k);return true;
+  });
+}
+// ─── helper: ha total sem duplicatas ─────────────────────────────────────
+function getHaUnico(lista){
+  return getFazendasUnicas(lista).reduce((s,a)=>s+(parseFloat(a.HA)||0),0);
+}
+
 function renderKPIs(){
-  const totalHa=areas.reduce((s,a)=>s+(parseFloat(a.HA)||0),0);
+  // Fazendas únicas para ha e contagem real
+  const fazendasUnicas=getFazendasUnicas();
+  const totalHa=fazendasUnicas.reduce((s,a)=>s+(parseFloat(a.HA)||0),0);
+  const totalFazendas=fazendasUnicas.length;
+  const totalServicos=areas.length;
+
+  // Serviços ativos por fluxo (contagem de linhas — correto para operações)
+  const nMonit=areas.filter(a=>String(a.Fluxo)==="1").length;
+  const nAplic=areas.filter(a=>String(a.Fluxo)==="2").length;
+
+  // Atrasos (por serviço — correto)
   const atrasos=areas.filter(a=>a.Status==="atraso").length;
-  // Faturamento: soma ValorNF de áreas do Fluxo 3
+
+  // Faturamento: soma ValorNF de Fluxo 3
   const totalFatBruto=areas
     .filter(a=>String(a.Fluxo)==="3"&&a.ValorNF)
     .reduce((s,a)=>s+(parseFloat(String(a.ValorNF).replace(",","."))||0),0);
@@ -866,18 +894,22 @@ function renderKPIs(){
     .filter(a=>String(a.Fluxo)==="3"&&a.Status==="pago"&&a.ValorNF)
     .reduce((s,a)=>s+(parseFloat(String(a.ValorNF).replace(",","."))||0),0);
   const nfEmitidas=areas.filter(a=>String(a.Fluxo)==="3").length;
-  const nfRecebidas=areas.filter(a=>String(a.Fluxo)==="3"&&a.Status==="pago").length;
-  // Formatar R$
+
   function fmtBRL(v){
     if(v===0)return"R$ 0";
     if(v>=1000)return"R$ "+Math.round(v/1000).toLocaleString("pt-BR")+"k";
     return"R$ "+v.toLocaleString("pt-BR",{minimumFractionDigits:0,maximumFractionDigits:0});
   }
+
   const kpis=[
-    {icon:"📋",val:areas.length,label:"Áreas Ativas",color:"var(--blue)",bar:"#3B82F6",sub:null},
-    {icon:"🌾",val:Math.round(totalHa).toLocaleString("pt-BR"),label:"Hectares Totais",color:"var(--teal)",bar:"#14B8A6",sub:"ha"},
-    {icon:"🔍",val:areas.filter(a=>String(a.Fluxo)==="1").length,label:"Monitoramento",color:"var(--green3)",bar:"#22C55E",sub:"áreas"},
-    {icon:"🚁",val:areas.filter(a=>String(a.Fluxo)==="2").length,label:"Aplicação",color:"var(--amber)",bar:"#F59E0B",sub:"áreas"},
+    {icon:"🏡",val:totalFazendas,label:"Fazendas",color:"var(--blue)",bar:"#3B82F6",
+      sub:totalServicos+" serviço(s) ativos"},
+    {icon:"🌾",val:Math.round(totalHa).toLocaleString("pt-BR"),label:"Hectares Totais",color:"var(--teal)",bar:"#14B8A6",
+      sub:"área real sem duplicata"},
+    {icon:"🔍",val:nMonit,label:"Monitoramento",color:"var(--green3)",bar:"#22C55E",
+      sub:"serviços"},
+    {icon:"🚁",val:nAplic,label:"Aplicação",color:"var(--amber)",bar:"#F59E0B",
+      sub:"serviços"},
     {icon:"💰",val:fmtBRL(totalFatBruto),label:"Faturamento",color:"var(--orange)",bar:"#F97316",
       sub:totalFatRecebido>0?fmtBRL(totalFatRecebido)+" recebido":nfEmitidas+" NF(s)"},
     {icon:"⚠️",val:atrasos,label:"Atrasadas",color:"var(--red)",bar:"#EF4444",sub:null},
@@ -897,22 +929,37 @@ function renderTeam(){
   const grid=document.getElementById("team-grid");
   const total=document.getElementById("equipe-total");
   const allNomes=colabs.map(c=>c.nome);
-  const areasPorColab={};
-  allNomes.forEach(n=>areasPorColab[n]=[]);
-  areas.forEach(a=>{if(a.Colaborador&&areasPorColab[a.Colaborador]!==undefined)areasPorColab[a.Colaborador].push(a);});
-  const ativos=allNomes.filter(n=>areasPorColab[n].length>0);
+
+  // Agrupar TODOS os serviços por colaborador (para atrasos/alertas)
+  const servicosPorColab={};
+  allNomes.forEach(n=>servicosPorColab[n]=[]);
+  areas.forEach(a=>{if(a.Colaborador&&servicosPorColab[a.Colaborador]!==undefined)servicosPorColab[a.Colaborador].push(a);});
+
+  // Fazendas ÚNICAS por colaborador (para ha e contagem real)
+  const fazUnicasPorColab={};
+  allNomes.forEach(n=>fazUnicasPorColab[n]=[]);
+  getFazendasUnicas().forEach(a=>{
+    if(a.Colaborador&&fazUnicasPorColab[a.Colaborador]!==undefined)
+      fazUnicasPorColab[a.Colaborador].push(a);
+  });
+
+  const ativos=allNomes.filter(n=>servicosPorColab[n].length>0);
   if(total)total.textContent=`${ativos.length} de ${colabs.length} com áreas ativas`;
   if(!grid)return;
+
   grid.innerHTML=colabs.map(col=>{
-    const mine=areasPorColab[col.nome]||[];
-    const ha=mine.reduce((s,a)=>s+(parseFloat(a.HA)||0),0);
-    const atr=mine.filter(a=>a.Status==="atraso").length;
-    const alt=mine.filter(a=>a.Status==="alerta").length;
+    const servicos=servicosPorColab[col.nome]||[];
+    const fazUnicas=fazUnicasPorColab[col.nome]||[];
+    // Ha real: soma das fazendas únicas
+    const ha=fazUnicas.reduce((s,a)=>s+(parseFloat(a.HA)||0),0);
+    const atr=servicos.filter(a=>a.Status==="atraso").length;
+    const alt=servicos.filter(a=>a.Status==="alerta").length;
     const ok=atr===0&&alt===0;
     return `<div class="team-card" style="border-color:${col.cor}22">
       <div class="team-avatar" style="background:${col.cor}">${getIniciais(col.nome)}</div>
       <div class="team-name">${col.nome}</div>
-      <div class="team-areas">${mine.length} área(s) · ${Math.round(ha).toLocaleString("pt-BR")} ha</div>
+      <div class="team-areas">${fazUnicas.length} fazenda(s) · ${Math.round(ha).toLocaleString("pt-BR")} ha</div>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:6px">${servicos.length} serviço(s) ativo(s)</div>
       <div class="team-pills">
         ${atr>0?`<span class="team-pill" style="background:rgba(239,68,68,.15);color:#FCA5A5">⚠ ${atr}</span>`:""}
         ${alt>0?`<span class="team-pill" style="background:rgba(245,158,11,.15);color:#FCD34D">⚡ ${alt}</span>`:""}
@@ -1397,6 +1444,49 @@ function salvarMetasLocal(k,d){localStorage.setItem("dronefy-metas-"+k,JSON.stri
 function getMesKey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");}
 function getMesLabel(k){const[y,m]=k.split("-");return new Date(parseInt(y),parseInt(m)-1,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"});}
 
+function getMetasColab(nome,mesKey){
+  try{const s=localStorage.getItem("dronefy-meta-colab-"+nome+"-"+mesKey);return s?JSON.parse(s):{}}catch{return {};}
+}
+function salvarMetasColabLocal(nome,mesKey,dados){
+  localStorage.setItem("dronefy-meta-colab-"+nome+"-"+mesKey,JSON.stringify(dados));
+}
+
+function cardMetaHtml(titulo,icon,cor,real,meta,unit){
+  const pct=meta>0?Math.min(100,Math.round((real/meta)*100)):0;
+  const cp=pct>=100?"#22C55E":pct>=70?"#F59E0B":pct>=40?"#F97316":"#EF4444";
+  const sm=meta===0;
+  return "<div style='background:var(--bg);border-radius:10px;padding:12px;border:1px solid "+cor+"22'>"
+    +"<div style='font-size:10px;color:"+cor+";font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px'>"+icon+" "+titulo+"</div>"
+    +"<div style='display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px'>"
+    +"<div><div style='font-size:20px;font-weight:800;color:var(--white)'>"+Math.round(real).toLocaleString("pt-BR")+"</div>"
+    +"<div style='font-size:10px;color:var(--text3)'>de "+(sm?"—":Math.round(meta).toLocaleString("pt-BR"))+" "+unit+"</div></div>"
+    +"<div style='font-size:20px;font-weight:800;color:"+(sm?"var(--text3)":cp)+"'>"+(sm?"—":pct+"%")+"</div></div>"
+    +(sm
+      ?"<div style='font-size:10px;color:var(--text3)'>Meta não definida</div>"
+      :"<div style='height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:4px'>"
+      +"<div style='height:100%;width:"+pct+"%;background:"+cp+";border-radius:3px;transition:width .6s'></div></div>"
+      +"<div style='display:flex;justify-content:space-between;font-size:10px;color:var(--text3)'>"
+      +"<span>"+Math.round(real).toLocaleString("pt-BR")+" realizado</span>"
+      +(pct>=100?"<span style='color:#22C55E;font-weight:700'>✓ Meta atingida!</span>"
+               :"<span>faltam "+Math.max(0,Math.round(meta-real)).toLocaleString("pt-BR")+"</span>")
+      +"</div>")
+    +"</div>";
+}
+
+window.salvarMetasColab=function(nome){
+  const mesSel=document.getElementById("metas-mes");
+  const mesKey=mesSel?.value||getMesKey(new Date());
+  const dados={
+    "monit-ha":parseFloat(document.getElementById("mc-"+nome+"-monit-ha")?.value)||0,
+    "aplic-ha":parseFloat(document.getElementById("mc-"+nome+"-aplic-ha")?.value)||0,
+  };
+  salvarMetasColabLocal(nome,mesKey,dados);
+  const okEl=document.getElementById("mc-"+nome+"-ok");
+  if(okEl){okEl.style.display="block";okEl.textContent="✓ Meta de "+nome+" salva";
+    setTimeout(()=>okEl.style.display="none",2000);}
+  window.renderMetas();
+};
+
 window.renderMetas=function(){
   const hoje=new Date();
   const mesSel=document.getElementById("metas-mes");
@@ -1417,16 +1507,22 @@ window.renderMetas=function(){
   ["monit-ha","monit-areas","aplic-ha","aplic-areas","fat-valor","fat-nfs"].forEach(k=>{
     const el=document.getElementById("meta-"+k);if(el)el.value=metas[k]||"";
   });
+
   const[y,m]=mesKey.split("-");
   const iMes=new Date(parseInt(y),parseInt(m)-1,1);
   const fMes=new Date(parseInt(y),parseInt(m),0);
-  const areasDoMes=areas.filter(a=>{if(!a.DataInicio)return false;const d=new Date(a.DataInicio);return d>=iMes&&d<=fMes;});
+  const areasDoMes=areas.filter(a=>{
+    if(!a.DataInicio)return false;
+    const d=new Date(a.DataInicio);return d>=iMes&&d<=fMes;
+  });
   const mF1=areasDoMes.filter(a=>String(a.Fluxo)==="1");
   const mF2=areasDoMes.filter(a=>String(a.Fluxo)==="2");
   const mF3=areasDoMes.filter(a=>String(a.Fluxo)==="3"&&a.Status==="pago");
   const haF1=mF1.reduce((s,a)=>s+(parseFloat(a.HA)||0),0);
   const haF2=mF2.reduce((s,a)=>s+(parseFloat(a.HA)||0),0);
-  const cards=[
+
+  // ── Cards gerais ──────────────────────────────────────────────────
+  const cardsGerais=[
     {icon:"🔍",titulo:"Monitoramento — ha",meta:parseFloat(metas["monit-ha"])||0,real:haF1,cor:"#22C55E",unit:"ha"},
     {icon:"🔍",titulo:"Monitoramento — áreas",meta:parseFloat(metas["monit-areas"])||0,real:mF1.length,cor:"#22C55E",unit:"áreas"},
     {icon:"🚁",titulo:"Aplicação — ha",meta:parseFloat(metas["aplic-ha"])||0,real:haF2,cor:"#F59E0B",unit:"ha"},
@@ -1435,49 +1531,59 @@ window.renderMetas=function(){
   ];
   const cont=document.getElementById("metas-cards");
   if(cont){
-    cont.innerHTML=cards.map(card=>{
-      const pct=card.meta>0?Math.min(100,Math.round((card.real/card.meta)*100)):0;
-      const cp=pct>=100?"#22C55E":pct>=70?"#F59E0B":pct>=40?"#F97316":"#EF4444";
-      const sm=card.meta===0;
-      return "<div style='background:var(--card);border:1px solid "+card.cor+"22;border-radius:14px;padding:18px;border-top:3px solid "+card.cor+"'>"
-        +"<div style='display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px'>"
-        +"<div><div style='font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px'>"+card.icon+" "+card.titulo+"</div>"
-        +"<div style='font-size:24px;font-weight:800;color:var(--white)'>"+Math.round(card.real).toLocaleString("pt-BR")+"</div>"
-        +"<div style='font-size:11px;color:var(--text3);margin-top:2px'>de "+(sm?"—":Math.round(card.meta).toLocaleString("pt-BR"))+" "+card.unit+"</div></div>"
-        +"<div style='text-align:right'><div style='font-size:26px;font-weight:800;color:"+(sm?"var(--text3)":cp)+"'>"+(sm?"—":pct+"%")+"</div>"
-        +(!sm&&pct>=100?"<div style='font-size:11px;color:#22C55E;font-weight:600'>✓ Meta atingida!</div>":"")
+    cont.innerHTML=cardsGerais.map(card=>cardMetaHtml(card.titulo,card.icon,card.cor,card.real,card.meta,card.unit)).join("");
+  }
+
+  // ── Metas por colaborador (Wesley e Luiz primeiro, depois demais) ─
+  const COLAB_META=["Wesley","Luiz"]; // colaboradores com meta individual
+  const colabs=getColabs();
+  const secEl=document.getElementById("metas-colab-section");
+  if(!secEl)return;
+
+  secEl.innerHTML=colabs.filter(col=>COLAB_META.indexOf(col.nome)>-1).map(col=>{
+    const mine1=areasDoMes.filter(a=>a.Colaborador===col.nome&&String(a.Fluxo)==="1");
+    const mine2=areasDoMes.filter(a=>a.Colaborador===col.nome&&String(a.Fluxo)==="2");
+    const haMonit=mine1.reduce((s,a)=>s+(parseFloat(a.HA)||0),0);
+    const haAplic=mine2.reduce((s,a)=>s+(parseFloat(a.HA)||0),0);
+    const temMeta=COLAB_META.indexOf(col.nome)>-1;
+    const mc=temMeta?getMetasColab(col.nome,mesKey):{};
+    const metaMonitHa=parseFloat(mc["monit-ha"])||0;
+    const metaAplicHa=parseFloat(mc["aplic-ha"])||0;
+    const cor=col.cor||"#22C55E";
+    const nomeId=col.nome.replace(/\s+/g,"_");
+
+    return "<div style='background:var(--card);border:1px solid "+cor+"33;border-top:3px solid "+cor+";border-radius:14px;padding:20px;margin-bottom:16px'>"
+      // Header colaborador
+      +"<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:16px'>"
+      +"<div style='display:flex;align-items:center;gap:10px'>"
+      +"<div style='width:40px;height:40px;border-radius:10px;background:"+cor+";display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#0A140A'>"+getIniciais(col.nome)+"</div>"
+      +"<div><div style='font-weight:700;font-size:15px;color:var(--white)'>"+col.nome+"</div>"
+      +"<div style='font-size:11px;color:var(--text3)'>"+mine1.length+" monit. · "+mine2.length+" aplic. neste mês</div></div></div>"
+      +(temMeta?"<span style='font-size:10px;background:"+cor+"15;border:1px solid "+cor+"33;border-radius:5px;padding:3px 8px;color:"+cor+";font-weight:600'>🎯 Com meta individual</span>":"")
+      +"</div>"
+      // Cards de progresso
+      +"<div style='display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:"+(temMeta?"16px":"0")+";'>"
+      +cardMetaHtml("Monitoramento — ha","🔍","#22C55E",haMonit,metaMonitHa,"ha")
+      +cardMetaHtml("Aplicação — ha","🚁","#F59E0B",haAplic,metaAplicHa,"ha")
+      +"</div>"
+      // Definir meta (só para Wesley e Luiz)
+      +(temMeta
+        ?"<div style='border-top:1px solid var(--border);padding-top:14px'>"
+        +"<div style='font-size:12px;font-weight:600;color:var(--text3);margin-bottom:10px'>✏️ Definir metas de "+col.nome+" para "+getMesLabel(mesKey)+"</div>"
+        +"<div style='display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px'>"
+        +"<div><label style='font-size:10px;font-weight:600;color:#22C55E;display:block;margin-bottom:4px;text-transform:uppercase'>🔍 Monit. (ha)</label>"
+        +"<input type='number' id='mc-"+nomeId+"-monit-ha' placeholder='Ex: 4000' value='"+(mc["monit-ha"]||"")+"' style='width:100%'/></div>"
+        +"<div><label style='font-size:10px;font-weight:600;color:#F59E0B;display:block;margin-bottom:4px;text-transform:uppercase'>🚁 Aplic. (ha)</label>"
+        +"<input type='number' id='mc-"+nomeId+"-aplic-ha' placeholder='Ex: 2500' value='"+(mc["aplic-ha"]||"")+"' style='width:100%'/></div>"
+        +"</div>"
+        +"<div style='display:flex;align-items:center;gap:8px'>"
+        +"<button onclick='window.salvarMetasColab(\"'+col.nome+'\")'" + " class='btn-primary' style='font-size:12px;padding:7px 16px'>"
+        +"💾 Salvar meta de "+col.nome+"</button>"
+        +"<span id='mc-"+nomeId+"-ok' style='display:none;font-size:12px;color:#22C55E;font-weight:600'></span>"
         +"</div></div>"
-        +(!sm?"<div style='height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:8px'>"
-        +"<div style='height:100%;width:"+pct+"%;background:"+cp+";border-radius:4px;transition:width .6s'></div></div>"
-        +"<div style='display:flex;justify-content:space-between;font-size:10px;color:var(--text3)'>"
-        +"<span>Realizado: "+Math.round(card.real).toLocaleString("pt-BR")+"</span>"
-        +"<span>Faltam: "+Math.max(0,Math.round(card.meta-card.real)).toLocaleString("pt-BR")+"</span></div>"
-        :"<div style='font-size:11px;color:var(--text3)'>Defina a meta abaixo</div>")
-        +"</div>";
-    }).join("");
-  }
-  const cc=document.getElementById("metas-colab");
-  if(cc){
-    const colabs=getColabs();
-    if(areasDoMes.length===0){cc.innerHTML="<div style='color:var(--text3);font-size:13px;padding:16px 0'>Nenhuma área com DataInicio neste mês.</div>";return;}
-    cc.innerHTML=colabs.map(col=>{
-      const mine=areasDoMes.filter(a=>a.Colaborador===col.nome);
-      if(!mine.length)return "";
-      const ha=mine.reduce((s,a)=>s+(parseFloat(a.HA)||0),0);
-      const conc=mine.filter(a=>a.Status==="ok"||a.Status==="pago").length;
-      const pct=Math.round((conc/mine.length)*100);
-      return "<div style='display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)'>"
-        +"<div style='width:36px;height:36px;border-radius:9px;background:"+col.cor+";display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--surface);flex-shrink:0'>"+getIniciais(col.nome)+"</div>"
-        +"<div style='flex:1;min-width:0'>"
-        +"<div style='display:flex;justify-content:space-between;margin-bottom:4px'>"
-        +"<span style='font-weight:600;font-size:13px;color:var(--white)'>"+col.nome+"</span>"
-        +"<span style='font-size:12px;color:var(--text3)'>"+mine.length+" área(s) · "+Math.round(ha).toLocaleString("pt-BR")+" ha</span></div>"
-        +"<div style='height:6px;background:var(--border);border-radius:3px;overflow:hidden'>"
-        +"<div style='height:100%;width:"+pct+"%;background:"+col.cor+";border-radius:3px'></div></div>"
-        +"<div style='font-size:10px;color:var(--text3);margin-top:3px'>"+conc+" concluída(s) de "+mine.length+" — "+pct+"%</div>"
-        +"</div></div>";
-    }).filter(Boolean).join("")||"<div style='color:var(--text3);font-size:13px'>Sem dados para este mês.</div>";
-  }
+        :"")
+      +"</div>";
+  }).join("");
 };
 
 window.salvarMetas=function(){
@@ -1489,7 +1595,7 @@ window.salvarMetas=function(){
   });
   salvarMetasLocal(mesKey,dados);
   const ok=document.getElementById("metas-ok");
-  if(ok){ok.textContent="✓ Metas salvas para "+getMesLabel(mesKey);ok.style.display="block";
+  if(ok){ok.textContent="✓ Metas gerais salvas para "+getMesLabel(mesKey);ok.style.display="block";
     setTimeout(()=>ok.style.display="none",2500);}
   window.renderMetas();
 };
@@ -2020,18 +2126,18 @@ window.renderFazendas=function(){
           +'<div style="font-size:10px;font-weight:700;color:'+(ativo?"var(--white)":"var(--text3)")+';margin-bottom:5px;text-align:center">C'+n+'</div>'
           // F1
           +'<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px">'
-          +'<span style="font-size:9px;color:var(--text3);width:20px">F1</span>'
+          +'<span style="font-size:9px;color:#22C55E;font-weight:600">🔍 Monit.</span>'
           +'<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:'+s1.bg+';color:'+s1.cor+'">'+s1.icon+'</span>'
           +(f1&&f1.IC?'<span style="font-size:9px;color:var(--text3)">IC:'+f1.IC+'</span>':"")
           +'</div>'
           // F2
           +'<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px">'
-          +'<span style="font-size:9px;color:var(--text3);width:20px">F2</span>'
+          +'<span style="font-size:9px;color:#F59E0B;font-weight:600">🚁 Aplic.</span>'
           +'<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:'+s2.bg+';color:'+s2.cor+'">'+s2.icon+'</span>'
           +'</div>'
           // F3 NF
           +'<div style="display:flex;align-items:center;gap:4px">'
-          +'<span style="font-size:9px;color:var(--text3);width:20px">NF</span>'
+          +'<span style="font-size:9px;color:#F97316;font-weight:600">💰 Fatur.</span>'
           +'<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:'+s3.bg+';color:'+s3.cor+'">'+s3.icon+'</span>'
           +(vNF>0?'<span style="font-size:9px;color:#F97316">R$'+Math.round(vNF/1000)+'k</span>':"")
           +'</div>'
@@ -2090,6 +2196,7 @@ window.salvarNovaArea=window.salvarNovaArea;
 window.renderAgenda=window.renderAgenda;
 window.renderMetas=window.renderMetas;
 window.salvarMetas=window.salvarMetas;
+window.salvarMetasColab=window.salvarMetasColab;
 window.renderRotas=window.renderRotas;
 window.filtrarPorRota=window.filtrarPorRota;
 window.renderFat=window.renderFat;
