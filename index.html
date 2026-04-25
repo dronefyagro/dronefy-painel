@@ -628,7 +628,7 @@ button:active{transform:scale(.97)}
       </div>
       <div style="display:flex;gap:8px;align-items:center">
         <select id="metas-mes" onchange="window.renderMetas()" style="width:180px;font-size:12px;padding:7px 10px"></select>
-        <button class="btn-ghost" onclick="window.setAba('config')" style="font-size:12px;padding:7px 12px">⚙️ Definir Metas</button>
+        <button class="btn-primary" onclick="window.setAba('config');setTimeout(function(){document.getElementById('config-metas-section')?.scrollIntoView({behavior:'smooth'})},300)" style="font-size:12px;padding:7px 12px">⚙️ Definir Metas</button>
       </div>
     </div>
     <!-- Cards gerais -->
@@ -1205,8 +1205,8 @@ window.abrirModal=function(enc){
       <button class="btn-ghost" style="flex:1" onclick="window.fecharModal()">Cancelar</button>
       <button class="btn-primary" style="flex:2" onclick="window.salvarEdicao('${enc}')">✓ Salvar no Sheets</button>
     </div>
-    <div id="modal-erro" class="alert alert-red" style="display:none;margin-top:10px"></div>
-    <div id="modal-ok" class="alert alert-green" style="display:none;margin-top:10px"></div>`;
+    <div id="edit-modal-erro" class="alert alert-red" style="display:none;margin-top:10px"></div>
+    <div id="edit-modal-ok" class="alert alert-green" style="display:none;margin-top:10px"></div>`;
   document.getElementById("modal").style.display="flex";
 };
 window.atualizarEtapasModal=function(f){
@@ -1497,124 +1497,168 @@ window.salvarMetasColabBtn=function(el){
   window.salvarMetasColab(nome,fromConfig);
 };
 window.salvarMetasColab=function(nome,fromConfig){
-  // Determine active month selector
-  const configSel=document.getElementById("config-metas-mes");
-  const metasSel=document.getElementById("metas-mes");
-  const mesSel=fromConfig?configSel:metasSel;
-  const mesKey=(mesSel?.value)||getMesKey(new Date());
+  // ── Determinar mês de forma inequívoca ───────────────────────────
+  var mesKey='';
+  // Prioridade 1: seletor ativo (config ou metas)
+  var configSel=document.getElementById('config-metas-mes');
+  var metasSel=document.getElementById('metas-mes');
+  if(fromConfig&&configSel&&configSel.value) mesKey=configSel.value;
+  else if(!fromConfig&&metasSel&&metasSel.value) mesKey=metasSel.value;
+  // Prioridade 2: qualquer seletor com valor
+  if(!mesKey&&configSel&&configSel.value) mesKey=configSel.value;
+  if(!mesKey&&metasSel&&metasSel.value) mesKey=metasSel.value;
+  // Prioridade 3: mês atual (fallback absoluto)
+  if(!mesKey) mesKey=getMesKey(new Date());
 
-  // Read from the correct section (config or metas)
-  const prefix=fromConfig?"cfg-mc-":"mc-";
-  const nomeId=nome.replace(/\s+/g,"_");
-  const monitEl=document.getElementById(prefix+nomeId+"-monit-ha");
-  const aplicEl=document.getElementById(prefix+nomeId+"-aplic-ha");
-  const dados={
-    "monit-ha":parseFloat(monitEl?.value)||0,
-    "aplic-ha":parseFloat(aplicEl?.value)||0,
-  };
-  if(dados["monit-ha"]===0&&dados["aplic-ha"]===0){
-    // Try the other prefix as fallback
-    const altPrefix=fromConfig?"mc-":"cfg-mc-";
-    const m2=document.getElementById(altPrefix+nomeId+"-monit-ha");
-    const a2=document.getElementById(altPrefix+nomeId+"-aplic-ha");
-    if(m2?.value)dados["monit-ha"]=parseFloat(m2.value)||0;
-    if(a2?.value)dados["aplic-ha"]=parseFloat(a2.value)||0;
-  }
-  salvarMetasColabLocal(nome,mesKey,dados);
-  // Show feedback on all matching ok elements
-  ["mc-","cfg-mc-"].forEach(function(p){
-    const okEl=document.getElementById(p+nomeId+"-ok");
-    if(okEl){okEl.style.display="block";okEl.textContent="✓ Meta de "+nome+" salva";
-      setTimeout(function(){okEl.style.display="none";},2000);}
+  // ── Ler inputs ───────────────────────────────────────────────────
+  var nomeId=nome.replace(/\s+/g,'_');
+  // Config usa prefixo cfg-mc-, aba Metas usa mc-
+  var prefix=fromConfig?'cfg-mc-':'mc-';
+  var monitVal=parseFloat(document.getElementById(prefix+nomeId+'-monit-ha')?.value)||0;
+  var aplicVal=parseFloat(document.getElementById(prefix+nomeId+'-aplic-ha')?.value)||0;
+
+  // ── Salvar ───────────────────────────────────────────────────────
+  var key='dronefy-meta-colab-'+nome+'-'+mesKey;
+  var dados={'monit-ha':monitVal,'aplic-ha':aplicVal};
+  localStorage.setItem(key,JSON.stringify(dados));
+
+  // Debug no console do navegador para verificação
+  console.log('[Dronefy] Meta salva:',key,'=',JSON.stringify(dados));
+
+  // ── Feedback visual ──────────────────────────────────────────────
+  var msg='✓ '+nome+': '+monitVal+'ha monit, '+aplicVal+'ha aplic ('+getMesLabel(mesKey)+')';
+  ['mc-','cfg-mc-'].forEach(function(p){
+    var ok=document.getElementById(p+nomeId+'-ok');
+    if(ok){ok.textContent=msg;ok.style.display='block';
+      setTimeout(function(){ok.style.display='none';},4000);}
   });
-  // Sync month selectors
-  if(configSel&&metasSel){
-    if(fromConfig)metasSel.value=mesKey;
-    else configSel.value=mesKey;
+
+  // ── Sincronizar seletores de mês ─────────────────────────────────
+  if(configSel&&configSel.options.length>0) configSel.value=mesKey;
+  if(metasSel){
+    if(!metasSel.dataset.init){
+      metasSel.dataset.init='1';
+      var hoje=new Date();
+      var opts='';
+      for(var i=-3;i<=2;i++){
+        var d=new Date(hoje.getFullYear(),hoje.getMonth()+i,1);
+        var k=getMesKey(d);
+        opts+="<option value='"+k+"'"+(i===0?' selected':'')+'>'+getMesLabel(k)+'</option>';
+      }
+      metasSel.innerHTML=opts;
+    }
+    metasSel.value=mesKey;
   }
+
+  // ── Atualizar ambas as views ─────────────────────────────────────
   window.renderMetas();
   window.renderConfigMetas();
 };
 
 window.renderMetas=function(){
-  const hoje=new Date();
-  const mesSel=document.getElementById("metas-mes");
+  var hoje=new Date();
+  var COLAB_META=["Wesley","Luiz"];
+
+  // ── 1. Determinar mesKey de forma robusta ────────────────────────
+  // Sempre usar o mês atual como padrão — não depender de seletores não inicializados
+  var mesKeyPadrao=getMesKey(hoje);
+  var mesSel=document.getElementById("metas-mes");
+  var configSel=document.getElementById("config-metas-mes");
+
+  // Inicializar o seletor se necessário
   if(mesSel&&!mesSel.dataset.init){
     mesSel.dataset.init="1";
-    let opts="";
-    for(let i=-3;i<=2;i++){
-      const d=new Date(hoje.getFullYear(),hoje.getMonth()+i,1);
-      const k=getMesKey(d);
+    var opts="";
+    for(var i=-3;i<=2;i++){
+      var d=new Date(hoje.getFullYear(),hoje.getMonth()+i,1);
+      var k=getMesKey(d);
       opts+="<option value='"+k+"'"+(i===0?" selected":"")+">"+(getMesLabel(k))+"</option>";
     }
     mesSel.innerHTML=opts;
+    mesSel.value=mesKeyPadrao; // garante valor após innerHTML
   }
-  const mesKey=mesSel?.value||getMesKey(hoje);
-  const metas=getMetas(mesKey);
-  const periodo=document.getElementById("metas-periodo");
+
+  // Obter mesKey: prioridade ao seletor da aba Metas, fallback ao Config, fallback ao mês atual
+  var mesKey=mesKeyPadrao;
+  if(mesSel&&mesSel.value)mesKey=mesSel.value;
+  else if(configSel&&configSel.value)mesKey=configSel.value;
+
+  // Sincronizar config selector
+  if(configSel&&configSel.value!==mesKey)configSel.value=mesKey;
+
+  // ── 2. Atualizar período exibido ────────────────────────────────
+  var periodo=document.getElementById("metas-periodo");
   if(periodo)periodo.textContent=getMesLabel(mesKey);
-  ["monit-ha","monit-areas","aplic-ha","aplic-areas","fat-valor","fat-nfs"].forEach(k=>{
-    const el=document.getElementById("meta-"+k);if(el)el.value=metas[k]||"";
-  });
 
-  const[y,m]=mesKey.split("-");
-  const iMes=new Date(parseInt(y),parseInt(m)-1,1);
-  const fMes=new Date(parseInt(y),parseInt(m),0);
-  const areasDoMes=areas.filter(a=>{
+  // ── 3. Cards gerais ─────────────────────────────────────────────
+  var metas=getMetas(mesKey);
+  var ym=mesKey.split("-");
+  var iMes=new Date(parseInt(ym[0]),parseInt(ym[1])-1,1);
+  var fMes=new Date(parseInt(ym[0]),parseInt(ym[1]),0,23,59,59);
+
+  var areasDoMes=areas.filter(function(a){
     if(!a.DataInicio)return false;
-    const d=new Date(a.DataInicio);return d>=iMes&&d<=fMes;
+    var raw=String(a.DataInicio);
+    // Handle both "2026-04-22" and ISO "2026-04-22T03:00:00.000Z"
+    var dateOnly=raw.length>10?raw.substring(0,10):raw;
+    var parts=dateOnly.split("-");
+    var d=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]));
+    return d>=iMes&&d<=fMes;
   });
-  const mF1=areasDoMes.filter(a=>String(a.Fluxo)==="1");
-  const mF2=areasDoMes.filter(a=>String(a.Fluxo)==="2");
-  const mF3=areasDoMes.filter(a=>String(a.Fluxo)==="3"&&a.Status==="pago");
-  const haF1=mF1.reduce((s,a)=>s+(parseFloat(a.HA)||0),0);
-  const haF2=mF2.reduce((s,a)=>s+(parseFloat(a.HA)||0),0);
 
-  // ── Cards gerais ──────────────────────────────────────────────────
-  const cardsGerais=[
+  var mF1=areasDoMes.filter(function(a){return String(a.Fluxo)==="1";});
+  var mF2=areasDoMes.filter(function(a){return String(a.Fluxo)==="2";});
+  var mF3=areasDoMes.filter(function(a){return String(a.Fluxo)==="3"&&a.Status==="pago";});
+  var haF1=mF1.reduce(function(s,a){return s+(parseFloat(a.HA)||0);},0);
+  var haF2=mF2.reduce(function(s,a){return s+(parseFloat(a.HA)||0);},0);
+
+  var cardsGerais=[
     {icon:"🔍",titulo:"Monitoramento — ha",meta:parseFloat(metas["monit-ha"])||0,real:haF1,cor:"#22C55E",unit:"ha"},
     {icon:"🔍",titulo:"Monitoramento — áreas",meta:parseFloat(metas["monit-areas"])||0,real:mF1.length,cor:"#22C55E",unit:"áreas"},
     {icon:"🚁",titulo:"Aplicação — ha",meta:parseFloat(metas["aplic-ha"])||0,real:haF2,cor:"#F59E0B",unit:"ha"},
     {icon:"🚁",titulo:"Aplicação — áreas",meta:parseFloat(metas["aplic-areas"])||0,real:mF2.length,cor:"#F59E0B",unit:"áreas"},
     {icon:"💰",titulo:"Faturamento — NFs",meta:parseFloat(metas["fat-nfs"])||0,real:mF3.length,cor:"#F97316",unit:"NFs"},
   ];
-  const cont=document.getElementById("metas-cards");
-  if(cont){
-    cont.innerHTML=cardsGerais.map(card=>cardMetaHtml(card.titulo,card.icon,card.cor,card.real,card.meta,card.unit)).join("");
-  }
+  var cont=document.getElementById("metas-cards");
+  if(cont)cont.innerHTML=cardsGerais.map(function(card){
+    return cardMetaHtml(card.titulo,card.icon,card.cor,card.real,card.meta,card.unit);
+  }).join("");
 
-  // ── Metas por colaborador (Wesley e Luiz primeiro, depois demais) ─
-  const COLAB_META=["Wesley","Luiz"]; // colaboradores com meta individual
-  const colabs=getColabs();
-  const secEl=document.getElementById("metas-colab-section");
+  // ── 4. Cards por colaborador ─────────────────────────────────────
+  var colabs=getColabs();
+  var secEl=document.getElementById("metas-colab-section");
   if(!secEl)return;
 
-  secEl.innerHTML=colabs.filter(col=>COLAB_META.indexOf(col.nome)>-1).map(col=>{
-    const mine1=areasDoMes.filter(a=>a.Colaborador===col.nome&&String(a.Fluxo)==="1");
-    const mine2=areasDoMes.filter(a=>a.Colaborador===col.nome&&String(a.Fluxo)==="2");
-    const haMonit=mine1.reduce((s,a)=>s+(parseFloat(a.HA)||0),0);
-    const haAplic=mine2.reduce((s,a)=>s+(parseFloat(a.HA)||0),0);
-    const temMeta=COLAB_META.indexOf(col.nome)>-1;
-    const mc=temMeta?getMetasColab(col.nome,mesKey):{};
-    const metaMonitHa=parseFloat(mc["monit-ha"])||0;
-    const metaAplicHa=parseFloat(mc["aplic-ha"])||0;
-    const cor=col.cor||"#22C55E";
-    const nomeId=col.nome.replace(/\s+/g,"_");
+  secEl.innerHTML=colabs.filter(function(col){
+    return COLAB_META.indexOf(col.nome)>-1;
+  }).map(function(col){
+    var mine1=areasDoMes.filter(function(a){return a.Colaborador===col.nome&&String(a.Fluxo)==="1";});
+    var mine2=areasDoMes.filter(function(a){return a.Colaborador===col.nome&&String(a.Fluxo)==="2";});
+    var haMonit=mine1.reduce(function(s,a){return s+(parseFloat(a.HA)||0);},0);
+    var haAplic=mine2.reduce(function(s,a){return s+(parseFloat(a.HA)||0);},0);
+    var cor=col.cor||"#22C55E";
+
+    // ── LEITURA DIRETA DO LOCALSTORAGE — sem depender de seletores ──
+    // Usa mesKey já determinado acima de forma robusta
+    var mc=getMetasColab(col.nome,mesKey);
+    var metaMonitHa=parseFloat(mc["monit-ha"])||0;
+    var metaAplicHa=parseFloat(mc["aplic-ha"])||0;
 
     return "<div style='background:var(--card);border:1px solid "+cor+"33;border-top:3px solid "+cor+";border-radius:14px;padding:20px;margin-bottom:16px'>"
-      // Header colaborador
       +"<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:16px'>"
       +"<div style='display:flex;align-items:center;gap:10px'>"
       +"<div style='width:40px;height:40px;border-radius:10px;background:"+cor+";display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#0A140A'>"+getIniciais(col.nome)+"</div>"
       +"<div><div style='font-weight:700;font-size:15px;color:var(--white)'>"+col.nome+"</div>"
-      +"<div style='font-size:11px;color:var(--text3)'>"+mine1.length+" monit. · "+mine2.length+" aplic. neste mês</div></div></div>"
-      +(temMeta?"<span style='font-size:10px;background:"+cor+"15;border:1px solid "+cor+"33;border-radius:5px;padding:3px 8px;color:"+cor+";font-weight:600'>🎯 Com meta individual</span>":"")
+      +"<div style='font-size:11px;color:var(--text3)'>"+mine1.length+" monit. · "+mine2.length+" aplic. neste mês · "+getMesLabel(mesKey)+"</div></div></div>"
+      +"<span style='font-size:10px;background:"+cor+"15;border:1px solid "+cor+"33;border-radius:5px;padding:3px 8px;color:"+cor+";font-weight:600'>🎯 Meta individual</span>"
       +"</div>"
-      // Cards de progresso
-      +"<div style='display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:"+(temMeta?"16px":"0")+";'>"
+      +"<div style='display:grid;grid-template-columns:1fr 1fr;gap:10px'>"
       +cardMetaHtml("Monitoramento — ha","🔍","#22C55E",haMonit,metaMonitHa,"ha")
       +cardMetaHtml("Aplicação — ha","🚁","#F59E0B",haAplic,metaAplicHa,"ha")
       +"</div>"
+      +(metaMonitHa===0&&metaAplicHa===0
+        ?"<div style='margin-top:10px;padding:8px 12px;background:var(--bg);border-radius:8px;border:1px solid #F59E0B33;font-size:11px;color:#F59E0B'>⚙️ Meta não definida — acesse Configurações → Definir Metas Mensais</div>"
+        :"")
       +"</div>";
   }).join("");
 };
@@ -1712,8 +1756,8 @@ window.abrirNovaArea=function(){
 };
 
 window.salvarNovaArea=async function(){
-  const erroEl=document.getElementById("modal-erro");
-  const okEl=document.getElementById("modal-ok");
+  const erroEl=document.getElementById("edit-modal-erro");
+  const okEl=document.getElementById("edit-modal-ok");
   erroEl.style.display="none";okEl.style.display="none";
   const fazenda=document.getElementById("m-fazenda").value.trim();
   if(!fazenda){erroEl.textContent="Informe o nome da fazenda.";erroEl.style.display="block";return;}
@@ -2211,54 +2255,66 @@ window.renderFazendas=function(){
 
 // ═══ CONFIG METAS ════════════════════════════════════════════════════════
 window.renderConfigMetas=function(){
-  const hoje=new Date();
-  const sel=document.getElementById("config-metas-mes");
+  var hoje=new Date();
+  var mesKeyPadrao=getMesKey(hoje);
+  var sel=document.getElementById("config-metas-mes");
+  var metasSel=document.getElementById("metas-mes");
+
   if(sel&&!sel.dataset.init){
     sel.dataset.init="1";
-    let opts="";
-    for(let i=-3;i<=2;i++){
-      const d=new Date(hoje.getFullYear(),hoje.getMonth()+i,1);
-      const k=getMesKey(d);
+    var opts="";
+    for(var i=-3;i<=2;i++){
+      var d=new Date(hoje.getFullYear(),hoje.getMonth()+i,1);
+      var k=getMesKey(d);
       opts+="<option value='"+k+"'"+(i===0?" selected":"")+">"+(getMesLabel(k))+"</option>";
     }
     sel.innerHTML=opts;
+    sel.value=mesKeyPadrao;
   }
-  const mesKey=sel?.value||getMesKey(hoje);
-  const periodo=document.getElementById("config-metas-periodo");
+
+  var mesKey=mesKeyPadrao;
+  if(sel&&sel.value)mesKey=sel.value;
+  else if(metasSel&&metasSel.value)mesKey=metasSel.value;
+
+  if(metasSel&&metasSel.value!==mesKey)metasSel.value=mesKey;
+
+  var periodo=document.getElementById("config-metas-periodo");
   if(periodo)periodo.textContent=getMesLabel(mesKey);
 
-  // Preencher inputs gerais
-  const metas=getMetas(mesKey);
-  ["monit-ha","monit-areas","aplic-ha","aplic-areas","fat-valor","fat-nfs"].forEach(k=>{
-    const el=document.getElementById("meta-"+k);if(el)el.value=metas[k]||"";
+  var metas=getMetas(mesKey);
+  ["monit-ha","monit-areas","aplic-ha","aplic-areas","fat-valor","fat-nfs"].forEach(function(k){
+    var el=document.getElementById("meta-"+k);if(el)el.value=metas[k]||"";
   });
 
-  // Sincronizar seletor da aba Metas
-  const metasMes=document.getElementById("metas-mes");
-  if(metasMes)metasMes.value=mesKey;
-
-  // Cards individuais Wesley e Luiz
-  const colabEl=document.getElementById("config-metas-colab");
+  var colabEl=document.getElementById("config-metas-colab");
   if(!colabEl)return;
-  const COLAB_META=["Wesley","Luiz"];
-  const colabs=getColabs().filter(col=>COLAB_META.indexOf(col.nome)>-1);
-  colabEl.innerHTML=colabs.map(col=>{
-    const mc=getMetasColab(col.nome,mesKey);
-    const cor=col.cor||"#22C55E";
-    const nomeId=col.nome.replace(/\s+/g,"_");
+  var COLAB_META=["Wesley","Luiz"];
+  var colabs=getColabs().filter(function(col){return COLAB_META.indexOf(col.nome)>-1;});
+
+  colabEl.innerHTML=colabs.map(function(col){
+    var mc=getMetasColab(col.nome,mesKey);
+    var cor=col.cor||"#22C55E";
+    var nomeId=col.nome.replace(/\s+/g,"_");
+    var valMonit=mc["monit-ha"]||"";
+    var valAplic=mc["aplic-ha"]||"";
     return "<div style='background:var(--bg);border:1px solid "+cor+"33;border-radius:10px;padding:14px'>"
-      +"<div style='display:flex;align-items:center;gap:8px;margin-bottom:12px'>"
+      +"<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:12px'>"
+      +"<div style='display:flex;align-items:center;gap:8px'>"
       +"<div style='width:32px;height:32px;border-radius:8px;background:"+cor+";display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#0A140A'>"+getIniciais(col.nome)+"</div>"
-      +"<span style='font-weight:700;font-size:13px;color:var(--white)'>"+col.nome+"</span></div>"
+      +"<div><span style='font-weight:700;font-size:13px;color:var(--white)'>"+col.nome+"</span>"
+      +(valMonit||valAplic
+        ?"<div style='font-size:10px;color:#22C55E'>Meta atual: "+valMonit+"ha monit. · "+valAplic+"ha aplic.</div>"
+        :"<div style='font-size:10px;color:var(--text3)'>Sem meta definida para "+getMesLabel(mesKey)+"</div>")
+      +"</div></div></div>"
       +"<div style='display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px'>"
       +"<div><label style='font-size:10px;font-weight:600;color:#22C55E;display:block;margin-bottom:4px'>🔍 Monit. (ha)</label>"
-      +"<input type='number' id='cfg-mc-"+nomeId+"-monit-ha' placeholder='Ex: 4000' value='"+(mc["monit-ha"]||"")+"'/></div>"
+      +"<input type='number' id='cfg-mc-"+nomeId+"-monit-ha' placeholder='Ex: 4000' value='"+valMonit+"'/></div>"
       +"<div><label style='font-size:10px;font-weight:600;color:#F59E0B;display:block;margin-bottom:4px'>🚁 Aplic. (ha)</label>"
-      +"<input type='number' id='cfg-mc-"+nomeId+"-aplic-ha' placeholder='Ex: 2500' value='"+(mc["aplic-ha"]||"")+"'/></div>"
+      +"<input type='number' id='cfg-mc-"+nomeId+"-aplic-ha' placeholder='Ex: 2500' value='"+valAplic+"'/></div>"
       +"</div>"
       +"<div style='display:flex;align-items:center;gap:8px'>"
-      +"<button onclick='window.salvarMetasColabBtn(this)' data-nome='"+col.nome+"' data-cfg='1' class='btn-primary' style='font-size:11px;padding:6px 12px'>💾 Salvar</button>"
-      +"<span id='cfg-mc-"+nomeId+"-ok' style='display:none;font-size:11px;color:#22C55E;font-weight:600'>✓ Salvo</span>"
+      +"<button onclick='window.salvarMetasColabBtn(this)' data-nome='"+col.nome+"' data-cfg='1' class='btn-primary' style='font-size:11px;padding:6px 12px'>💾 Salvar meta de "+col.nome+"</button>"
+      +"<span id='cfg-mc-"+nomeId+"-ok' style='display:none;font-size:11px;color:#22C55E;font-weight:600'></span>"
       +"</div></div>";
   }).join("");
 };
