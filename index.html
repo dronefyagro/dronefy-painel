@@ -380,6 +380,19 @@ button:active{transform:scale(.97)}
     </div>
     <div class="team-grid" id="team-grid"></div>
 
+
+    <!-- Filtro por Mês/Ano -->
+    <div id="filtro-periodo-bar" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:12px;font-weight:600;color:var(--text3)">📅 Período:</span>
+      <select id="filtro-mes" onchange="window.aplicarFiltroPeriodo()" style="font-size:12px;padding:6px 10px;min-width:140px">
+        <option value="">Todos os meses</option>
+      </select>
+      <select id="filtro-ano" onchange="window.aplicarFiltroPeriodo()" style="font-size:12px;padding:6px 10px;min-width:100px">
+        <option value="">Todos os anos</option>
+      </select>
+      <button class="btn-ghost" onclick="window.limparFiltroPeriodo()" style="font-size:11px;padding:5px 10px">✕ Limpar</button>
+      <div id="periodo-resumo" style="margin-left:auto;display:flex;gap:10px;flex-wrap:wrap;align-items:center"></div>
+    </div>
     <!-- Filtros -->
     <div class="section-header" style="margin-top:4px">
       <div class="section-title">Áreas Ativas</div>
@@ -662,15 +675,9 @@ button:active{transform:scale(.97)}
 
 <script>
 // ═══ DADOS ══════════════════════════════════════════════════════════
-const ETAPAS_F1=[
-  "Planejamento Safra","Planejamento Semanal","Inserção EntomApp",
-  "Aviso Cliente (D-3 a D-5)","Instalação Armadilhas","Relatório Instalação + VEJHO",
-  "Validação → Envio Cliente","Aguardando Recolhimento","Recolhimento e Contagem",
-  "Checagem e Lançamento Índice","Validação Índice","Envio Relatório + Orçamento CB",
-  "Aguarda Autorização Cliente","Autorizado → Aciona F2 e F3",
-];
-const ETAPAS_F2=["Planejamento de Voo","Execução da Operação","Lançamento das Áreas","Geração do Relatório","Validação → Envio Cliente","Concluído"];
-const ETAPAS_F3=["Autorização Recebida","NF Solicitada","NF Emitida","Boleto Gerado","Boleto Enviado ao Cliente","Aguarda Pagamento","Pagamento Confirmado"];
+const ETAPAS_F1=["Áreas Planejadas","Instalação Armadilhas","Recolhimento e Contagem","Inserção EntomApp / Relatórios Índice e Orçamento","Autorização de Aplicação","Concluído"];
+const ETAPAS_F2=["Plano de Voo","Operação em Andamento","Relatórios (Cliente / Faturamento)","Concluído"];
+const ETAPAS_F3=["Emissão NF","Boleto Gerado","Aguarda Pagamento","Pagamento Confirmado"];
 
 const FLUXO={
   1:{label:"Monitoramento",color:"#22C55E",icon:"🔍",border:"brd-green"},
@@ -895,13 +902,15 @@ window.carregarDados=async function(showSpin=false){
     if(json.ok!==undefined){
       const hoje=new Date();hoje.setHours(0,0,0,0);
       areas=(json.data||[]).map(function(a){
-        // Auto-calcular atraso: DataFim ultrapassada e status não finalizado
-        if(a.DataFim&&a.Status!=="pago"&&a.Status!=="ok"){
+        // Auto-calcular atraso: DataFim ultrapassada e não pago/concluído
+        if(a.DataFim&&a.Status!=="pago"){
           const raw=String(a.DataFim);
           const dateOnly=raw.length>10?raw.substring(0,10):raw;
           const parts=dateOnly.split("-");
-          const dataFim=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]));
-          if(dataFim<hoje)a.Status="atraso";
+          if(parts.length===3){
+            const dataFim=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]));
+            if(dataFim<hoje)a.Status="atraso";
+          }
         }
         return a;
       });
@@ -925,6 +934,7 @@ function setSyncTime(){
 // ═══ RENDER PAINEL ═════════════════════════════════════════════════════
 function renderPainel(){
   setConnStatus(true);
+  popularFiltrosPeriodo();
   renderKPIs();renderTeam();renderAreas();renderAlertas();
 }
 
@@ -943,27 +953,29 @@ function getHaUnico(lista){
 }
 
 function renderKPIs(){
+  // Respeitar filtro de período
+  const areasFiltradas=filtroPeriodoMes||filtroPeriodoAno?areas.filter(areaEmPeriodo):areas;
   // Fazendas únicas para ha e contagem real
-  const fazendasUnicas=getFazendasUnicas();
+  const fazendasUnicas=getFazendasUnicas(areasFiltradas);
   const totalHa=fazendasUnicas.reduce((s,a)=>s+(parseFloat(a.HA)||0),0);
   const totalFazendas=fazendasUnicas.length;
-  const totalServicos=areas.length;
+  const totalServicos=areasFiltradas.length;
 
   // Serviços ativos por fluxo (contagem de linhas — correto para operações)
   const nMonit=areas.filter(a=>String(a.Fluxo)==="1").length;
   const nAplic=areas.filter(a=>String(a.Fluxo)==="2").length;
 
   // Atrasos (por serviço — correto)
-  const atrasos=areas.filter(a=>a.Status==="atraso").length;
+  const atrasos=areasFiltradas.filter(a=>a.Status==="atraso").length;
 
   // Faturamento: soma ValorNF de Fluxo 3
-  const totalFatBruto=areas
+  const totalFatBruto=areasFiltradas
     .filter(a=>String(a.Fluxo)==="3"&&a.ValorNF)
     .reduce((s,a)=>s+(parseFloat(String(a.ValorNF).replace(",","."))||0),0);
-  const totalFatRecebido=areas
+  const totalFatRecebido=areasFiltradas
     .filter(a=>String(a.Fluxo)==="3"&&a.Status==="pago"&&a.ValorNF)
     .reduce((s,a)=>s+(parseFloat(String(a.ValorNF).replace(",","."))||0),0);
-  const nfEmitidas=areas.filter(a=>String(a.Fluxo)==="3").length;
+  const nfEmitidas=areasFiltradas.filter(a=>String(a.Fluxo)==="3").length;
 
   function fmtBRL(v){
     if(v===0)return"R$ 0";
@@ -1081,6 +1093,7 @@ function renderAlertas(){
 window.renderAreas=function(){
   const busca=(document.getElementById("search-input")||{}).value||"";
   const filtradas=areas.filter(a=>{
+    if(!areaEmPeriodo(a))return false;
     if(filtroFluxo>0&&String(a.Fluxo)!==String(filtroFluxo))return false;
     if(filtroStatus!=="todos"&&a.Status!==filtroStatus)return false;
     if(busca){
@@ -2429,6 +2442,109 @@ window.carregarLogs=async function(){
 };
 
 
+
+// ═══ FILTRO DE PERÍODO (MÊS/ANO) ═════════════════════════════════════
+let filtroPeriodoMes = "";
+let filtroPeriodoAno = "";
+
+function popularFiltrosPeriodo(){
+  const meses = new Set();
+  const anos  = new Set();
+  areas.forEach(a => {
+    const raw = a.DataInicio || a.DataFim || "";
+    if(!raw) return;
+    const s = String(raw);
+    const d = s.length > 10 ? s.substring(0,10) : s;
+    const pts = d.split("-");
+    if(pts.length === 3){
+      anos.add(pts[0]);
+      meses.add(pts[0]+"-"+pts[1]);
+    }
+  });
+
+  const selMes = document.getElementById("filtro-mes");
+  const selAno = document.getElementById("filtro-ano");
+  if(!selMes || !selAno) return;
+
+  const curMes = selMes.value;
+  const curAno = selAno.value;
+
+  // Populate meses
+  const mesesSorted = [...meses].sort().reverse();
+  selMes.innerHTML = '<option value="">Todos os meses</option>'
+    + mesesSorted.map(m => {
+        const [y,mo] = m.split("-");
+        const label = new Date(parseInt(y), parseInt(mo)-1, 1)
+          .toLocaleDateString("pt-BR", {month:"long", year:"numeric"});
+        return `<option value="${m}" ${m===curMes?"selected":""}>${label}</option>`;
+      }).join("");
+
+  // Populate anos
+  const anosSorted = [...anos].sort().reverse();
+  selAno.innerHTML = '<option value="">Todos os anos</option>'
+    + anosSorted.map(a => `<option value="${a}" ${a===curAno?"selected":""}>${a}</option>`).join("");
+}
+
+window.aplicarFiltroPeriodo = function(){
+  const selMes = document.getElementById("filtro-mes");
+  const selAno = document.getElementById("filtro-ano");
+  filtroPeriodoMes = selMes ? selMes.value : "";
+  filtroPeriodoAno = selAno ? selAno.value : "";
+  // Se mês selecionado, limpar ano (mês já inclui o ano)
+  if(filtroPeriodoMes && selAno) { selAno.value=""; filtroPeriodoAno=""; }
+  atualizarResumoPeriodo();
+  window.renderAreas();
+  window.renderKPIs();
+};
+
+window.limparFiltroPeriodo = function(){
+  filtroPeriodoMes = "";
+  filtroPeriodoAno = "";
+  const selMes = document.getElementById("filtro-mes");
+  const selAno = document.getElementById("filtro-ano");
+  if(selMes) selMes.value = "";
+  if(selAno) selAno.value = "";
+  document.getElementById("periodo-resumo").innerHTML = "";
+  window.renderAreas();
+  window.renderKPIs();
+};
+
+function areaEmPeriodo(a){
+  if(!filtroPeriodoMes && !filtroPeriodoAno) return true;
+  const raw = a.DataInicio || a.DataFim || "";
+  if(!raw) return false;
+  const s = String(raw);
+  const d = s.length > 10 ? s.substring(0,10) : s;
+  const pts = d.split("-");
+  if(pts.length !== 3) return false;
+  const anoArea  = pts[0];
+  const mesArea  = pts[0]+"-"+pts[1];
+  if(filtroPeriodoMes) return mesArea === filtroPeriodoMes;
+  if(filtroPeriodoAno) return anoArea === filtroPeriodoAno;
+  return true;
+}
+
+function atualizarResumoPeriodo(){
+  const el = document.getElementById("periodo-resumo");
+  if(!el) return;
+  if(!filtroPeriodoMes && !filtroPeriodoAno){ el.innerHTML=""; return; }
+
+  const filtradas = areas.filter(areaEmPeriodo);
+  const f1 = filtradas.filter(a=>String(a.Fluxo)==="1");
+  const f2 = filtradas.filter(a=>String(a.Fluxo)==="2");
+  const f3 = filtradas.filter(a=>String(a.Fluxo)==="3");
+  const haF1 = f1.reduce((s,a)=>s+(parseFloat(a.HA)||0),0);
+  const haF2 = f2.reduce((s,a)=>s+(parseFloat(a.HA)||0),0);
+  const fatF3 = f3.reduce((s,a)=>s+(parseFloat(String(a.ValorNF||"0").replace(",","."))||0),0);
+
+  el.innerHTML = [
+    f1.length > 0 ? `<span style="font-size:11px;background:#22C55E18;border:1px solid #22C55E33;border-radius:6px;padding:3px 9px;color:#22C55E">🔍 ${f1.length} monit. · ${Math.round(haF1).toLocaleString("pt-BR")} ha</span>` : "",
+    f2.length > 0 ? `<span style="font-size:11px;background:#F59E0B18;border:1px solid #F59E0B33;border-radius:6px;padding:3px 9px;color:#F59E0B">🚁 ${f2.length} aplic. · ${Math.round(haF2).toLocaleString("pt-BR")} ha</span>` : "",
+    f3.length > 0 ? `<span style="font-size:11px;background:#F9731618;border:1px solid #F9731633;border-radius:6px;padding:3px 9px;color:#F97316">💰 ${f3.length} NF(s) · R$ ${Math.round(fatF3).toLocaleString("pt-BR")}</span>` : "",
+  ].filter(Boolean).join("");
+}
+
+
 // ═══ WINDOW EXPORTS ════════════════════════════════════════════════════
 window.setAba=window.setAba;
 window.conectar=window.conectar;
@@ -2456,6 +2572,8 @@ window.salvarMetas=window.salvarMetas;
 window.salvarMetasColab=window.salvarMetasColab;
 window.salvarMetasColabBtn=window.salvarMetasColabBtn;
 window.carregarLogs=window.carregarLogs;
+window.aplicarFiltroPeriodo=window.aplicarFiltroPeriodo;
+window.limparFiltroPeriodo=window.limparFiltroPeriodo;
 window.renderConfigMetas=window.renderConfigMetas;
 window.renderRotas=window.renderRotas;
 window.filtrarPorRota=window.filtrarPorRota;
