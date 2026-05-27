@@ -2629,9 +2629,10 @@ window.excluirAreaConfirm=function(enc){
     "<button id='excluir-confirm-btn' style='flex:1;padding:10px;background:#EF4444;border:none;border-radius:8px;color:#fff;font-weight:700;font-size:13px;cursor:pointer;font-family:Inter,sans-serif'>🗑️ Excluir definitivamente</button>",
     "</div></div>"
   ].join("");
-  document.getElementById("excluir-cancel-btn").onclick = function(){ overlay.remove(); };
-  document.getElementById("excluir-confirm-btn").onclick = function(){ window.excluirArea(); };
+  // Append first, THEN query — elements only found in DOM after appendChild
   document.body.appendChild(overlay);
+  overlay.querySelector("#excluir-cancel-btn").onclick = function(){ overlay.remove(); };
+  overlay.querySelector("#excluir-confirm-btn").onclick = function(){ window.excluirArea(); };
   overlay.addEventListener("click",function(e){if(e.target===overlay)overlay.remove();});
 };
 
