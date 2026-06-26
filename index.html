@@ -709,6 +709,7 @@ const ESTRUTURA=[
   ["S","ValorNF","1500.00","Andressa"],
   ["T","Contrato","Dronefy","Alyce"],
   ["U","Ciclo","1","Alyce"],
+  ["V","OrigemFat","Monitoramento","Andressa"],
 ];
 const APPS_SCRIPT=`function doGet(e) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -1249,6 +1250,14 @@ window.abrirModal=function(enc){
         </select></div>
     </div>
     <div class="form-row">
+      <div class="form-group"><label class="form-label">Origem do Faturamento</label>
+        <select id="m-origem-fat">
+          <option value="">— Selecione —</option>
+          ${["Monitoramento","Aplicação","Outras Fontes"].map(o=>`<option value="${o}" ${a.OrigemFat===o?"selected":""}>${o}</option>`).join("")}
+        </select></div>
+      <div class="form-group"></div>
+    </div>
+    <div class="form-row">
       <div class="form-group"><label class="form-label">Fluxo</label>
         <select id="m-fluxo" onchange="window.atualizarEtapasModal(this.value)">
           <option value="1" ${String(a.Fluxo)==="1"?"selected":""}>🔍 Fluxo 1 — Monitoramento</option>
@@ -1322,12 +1331,13 @@ window.salvarEdicao=async function(enc){
   const valorNFVal=document.getElementById("m-valor-nf")?.value||"";
   const contratoVal=document.getElementById("m-contrato")?.value||"";
   const cicloVal=document.getElementById("m-ciclo")?.value||"";
+  const origemFatVal=document.getElementById("m-origem-fat")?.value||"";
   const row=[a.ID,document.getElementById("m-produtor").value,document.getElementById("m-fazenda").value,
     document.getElementById("m-colaborador").value,fluxoVal,
     document.getElementById("m-etapa").value,document.getElementById("m-status").value,
     document.getElementById("m-ha").value,document.getElementById("m-obs").value,
     document.getElementById("m-falso").value,ini,fim,tempo!==null?tempo:"",
-    armInst,dataArm,armRec,dataRec,rotaVal,valorNFVal,contratoVal,cicloVal];
+    armInst,dataArm,armRec,dataRec,rotaVal,valorNFVal,contratoVal,cicloVal,origemFatVal];
   okEl.innerHTML=`<span class="loading-spin"></span> Salvando...`;okEl.style.display="block";
   try{
     await fetch(scriptUrl,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},
@@ -1842,6 +1852,15 @@ window.abrirNovaArea=function(){
     +'<option value="3">Ciclo 3</option><option value="4">Ciclo 4</option>'
     +'</select></div></div>'
     +'<div class="form-row">'
+    +'<div class="form-group"><label class="form-label">Origem do Faturamento</label>'
+    +'<select id="m-origem-fat">'
+    +'<option value="">— Selecione —</option>'
+    +'<option value="Monitoramento">Monitoramento</option>'
+    +'<option value="Aplicação">Aplicação</option>'
+    +'<option value="Outras Fontes">Outras Fontes</option>'
+    +'</select></div>'
+    +'<div class="form-group"></div></div>'
+    +'<div class="form-row">'
     +'<div class="form-group"><label class="form-label">Fluxo</label>'
     +'<select id="m-fluxo" onchange="window.atualizarEtapasModal(this.value);window.toggleTrapFields(this.value)">'
     +'<option value="1">🔍 Fluxo 1 — Monitoramento</option>'
@@ -1913,7 +1932,8 @@ window.salvarNovaArea=async function(){
     document.getElementById("m-rota")?.value||"",
     document.getElementById("m-valor-nf")?.value||"",
     document.getElementById("m-contrato")?.value||"",
-    document.getElementById("m-ciclo")?.value||""];
+    document.getElementById("m-ciclo")?.value||"",
+    document.getElementById("m-origem-fat")?.value||""];
   okEl.innerHTML='<span class="loading-spin"></span> Cadastrando...';okEl.style.display="block";
   try{
     await fetch(scriptUrl,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},
@@ -2016,72 +2036,112 @@ window.renderFat=function(){
   if(!resumoEl||!listaEl)return;
 
   var fatAreas=areas.filter(function(a){return String(a.Fluxo)==="3";});
-  var totalBruto=fatAreas.reduce(function(s,a){return s+(parseFloat(String(a.ValorNF||"0").replace(",","."))||0);},0);
-  var totalRecebido=fatAreas.filter(function(a){return a.Status==="pago";})
-    .reduce(function(s,a){return s+(parseFloat(String(a.ValorNF||"0").replace(",","."))||0);},0);
-  var totalPendente=totalBruto-totalRecebido;
-  var nfEmitidas=fatAreas.length;
-  var nfRecebidas=fatAreas.filter(function(a){return a.Status==="pago";}).length;
-  var pctRecebido=totalBruto>0?Math.round((totalRecebido/totalBruto)*100):0;
 
+  function somaValor(list){
+    return list.reduce(function(s,a){return s+(parseFloat(String(a.ValorNF||"0").replace(",","."))||0);},0);
+  }
   function fmtBRL(v){
+    if(!v)return"R$ 0";
+    if(v>=1000)return"R$ "+v.toLocaleString("pt-BR",{minimumFractionDigits:0,maximumFractionDigits:0});
     return"R$ "+v.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
   }
+
+  // ── Totais gerais ────────────────────────────────────────────────
+  var totalBruto=somaValor(fatAreas);
+  var totalRecebido=somaValor(fatAreas.filter(function(a){return a.Status==="pago"||parseInt(a.Etapa)===4;}));
+  var totalPendente=totalBruto-totalRecebido;
+  var pctRecebido=totalBruto>0?Math.round((totalRecebido/totalBruto)*100):0;
+  var nfEmitidas=fatAreas.length;
+
+  // ── Por Origem ───────────────────────────────────────────────────
+  var ORIGENS=["Monitoramento","Aplicação","Outras Fontes"];
+  var CORES_ORIGEM={"Monitoramento":"#22C55E","Aplicação":"#F59E0B","Outras Fontes":"#A855F7"};
+  var origemMap={};
+  ORIGENS.forEach(function(o){origemMap[o]={areas:[],total:0};});
+  origemMap["Sem classificação"]={areas:[],total:0};
+
+  fatAreas.forEach(function(a){
+    var o=a.OrigemFat&&ORIGENS.indexOf(a.OrigemFat)>-1?a.OrigemFat:"Sem classificação";
+    origemMap[o].areas.push(a);
+    origemMap[o].total+=parseFloat(String(a.ValorNF||"0").replace(",","."))||0;
+  });
 
   if(!fatAreas.length){
     resumoEl.innerHTML="";
     listaEl.innerHTML='<div class="empty-state"><div class="empty-icon">💰</div>'
-      +'<div style="color:var(--amber);font-weight:600">Nenhuma área no Fluxo 3 (Faturamento)</div>'
-      +'<div style="font-size:13px;color:var(--text3);margin-top:8px">Cadastre áreas com Fluxo 3 e preencha o campo ValorNF na planilha.</div></div>';
+      +'<div>Nenhuma área no Fluxo 3 (Faturamento)</div></div>';
     return;
   }
 
+  // ── Cards resumo ─────────────────────────────────────────────────
   resumoEl.innerHTML=
-    '<div style="background:var(--card);border:1px solid #F97316 33;border-top:3px solid #F97316;border-radius:14px;padding:18px">'
+    // Card total emitido
+    '<div style="background:var(--card);border:1px solid #F9731633;border-top:3px solid #F97316;border-radius:14px;padding:18px">'
     +'<div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">💰 Total Emitido</div>'
     +'<div style="font-size:26px;font-weight:800;color:#F97316">'+fmtBRL(totalBruto)+'</div>'
-    +'<div style="font-size:11px;color:var(--text3);margin-top:4px">'+nfEmitidas+' NF(s) emitida(s)</div></div>'
-
+    +'<div style="font-size:11px;color:var(--text3);margin-top:4px">'+nfEmitidas+' NF(s)</div></div>'
+    // Card recebido
     +'<div style="background:var(--card);border:1px solid #14B8A633;border-top:3px solid #14B8A6;border-radius:14px;padding:18px">'
-    +'<div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">✓ Total Recebido</div>'
+    +'<div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">✓ Recebido</div>'
     +'<div style="font-size:26px;font-weight:800;color:#14B8A6">'+fmtBRL(totalRecebido)+'</div>'
-    +'<div style="font-size:11px;color:var(--text3);margin-top:4px">'+nfRecebidas+' NF(s) pagas</div></div>'
-
+    +'<div style="font-size:11px;color:var(--text3);margin-top:4px">'+pctRecebido+'% do total</div></div>'
+    // Card a receber
     +'<div style="background:var(--card);border:1px solid #F59E0B33;border-top:3px solid #F59E0B;border-radius:14px;padding:18px">'
     +'<div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">⏳ A Receber</div>'
     +'<div style="font-size:26px;font-weight:800;color:#F59E0B">'+fmtBRL(totalPendente)+'</div>'
-    +'<div style="font-size:11px;color:var(--text3);margin-top:4px">'+(nfEmitidas-nfRecebidas)+' NF(s) pendentes</div></div>'
+    +'<div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:8px">'
+    +'<div style="height:100%;width:'+pctRecebido+'%;background:'+(pctRecebido>=100?"#22C55E":"#14B8A6")+';border-radius:3px"></div></div></div>'
 
-    +'<div style="background:var(--card);border:1px solid #3B82F633;border-top:3px solid #3B82F6;border-radius:14px;padding:18px">'
-    +'<div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">📊 Recebimento</div>'
-    +'<div style="font-size:26px;font-weight:800;color:#3B82F6">'+pctRecebido+'%</div>'
-    +'<div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:8px">'
-    +'<div style="height:100%;width:'+pctRecebido+'%;background:'+(pctRecebido>=100?"#22C55E":"#3B82F6")+';border-radius:3px"></div></div></div>';
+  // ── Cards por Origem ─────────────────────────────────────────────
+  +[...ORIGENS,"Sem classificação"].filter(function(o){return origemMap[o].areas.length>0;}).map(function(o){
+    var g=origemMap[o];
+    var cor=CORES_ORIGEM[o]||"#6B8F6B";
+    var pct=totalBruto>0?Math.round((g.total/totalBruto)*100):0;
+    return '<div style="background:var(--card);border:1px solid '+cor+'33;border-top:3px solid '+cor+';border-radius:14px;padding:18px">'
+      +'<div style="font-size:11px;color:'+cor+';font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">'+o+'</div>'
+      +'<div style="font-size:22px;font-weight:800;color:var(--white)">'+fmtBRL(g.total)+'</div>'
+      +'<div style="display:flex;justify-content:space-between;font-size:11px;margin-top:4px">'
+      +'<span style="color:var(--text3)">'+g.areas.length+' NF(s)</span>'
+      +'<span style="color:'+cor+';font-weight:600">'+pct+'% do total</span></div>'
+      +'<div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:8px">'
+      +'<div style="height:100%;width:'+pct+'%;background:'+cor+';border-radius:2px"></div></div></div>';
+  }).join("");
 
-  listaEl.innerHTML='<div style="font-weight:700;font-size:14px;color:var(--white);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)">Detalhamento por Área</div>'
-    +fatAreas.map(function(a){
-      var valor=parseFloat(String(a.ValorNF||"0").replace(",","."))||0;
-      var pago=a.Status==="pago";
-      var rc=getCorColab(a.Colaborador);
-      var enc=encodeURIComponent(JSON.stringify(a));
-      return '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;'
-        +'padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer"'
-        +' onclick="window.abrirModal(\''+enc+'\')">'
-        +'<div style="flex:1;min-width:0">'
-        +'<div style="color:var(--white);font-weight:600;font-size:13px">'+(a.Fazenda||"—")+'</div>'
-        +(a["Produtor Rural"]?'<div style="color:var(--text3);font-size:11px">👤 '+a["Produtor Rural"]+'</div>':"")
-        +'<div style="display:flex;gap:5px;margin-top:5px;flex-wrap:wrap">'
-        +'<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:'+rc+'15;color:'+rc+'">'+(a.Colaborador||"—")+'</span>'
-        +(a.Rota?'<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:#3B82F615;color:#3B82F6">📍 '+a.Rota+'</span>':"")
-        +'</div></div>'
-        +'<div style="text-align:right;flex-shrink:0">'
-        +(valor>0?'<div style="font-size:15px;font-weight:700;color:#F97316">'+fmtBRL(valor)+'</div>'
-                 :'<div style="font-size:13px;color:var(--text3)">Sem valor</div>')
-        +'<div style="margin-top:4px">'
-        +(pago?'<span style="font-size:10px;background:rgba(20,184,166,.15);border-radius:4px;padding:2px 8px;color:#14B8A6">✓ Recebido</span>'
-              :'<span style="font-size:10px;background:rgba(245,158,11,.15);border-radius:4px;padding:2px 8px;color:#F59E0B">⏳ Pendente</span>')
-        +'</div></div></div>';
-    }).join("");
+  // ── Lista detalhada agrupada por origem ──────────────────────────
+  listaEl.innerHTML=[...ORIGENS,"Sem classificação"].filter(function(o){return origemMap[o].areas.length>0;}).map(function(o){
+    var g=origemMap[o];
+    var cor=CORES_ORIGEM[o]||"#6B8F6B";
+    return '<div style="margin-bottom:20px">'
+      +'<div style="font-weight:700;font-size:14px;color:'+cor+';margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)">'
+      +'💰 '+o+' <span style="font-size:11px;font-weight:400;color:var(--text3)">'+g.areas.length+' NF(s) · '+fmtBRL(g.total)+'</span></div>'
+      +g.areas.map(function(a){
+        var st=STATUS[a.Status]||STATUS.ok;
+        var rc=getCorColab(a.Colaborador);
+        var enc=encodeURIComponent(JSON.stringify(a));
+        var vNF=parseFloat(String(a.ValorNF||"0").replace(",","."))||0;
+        var pago=parseInt(a.Etapa)===4||a.Status==="pago";
+        return '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;'
+          +'padding:12px 16px;margin-bottom:6px;display:flex;align-items:center;gap:12px;cursor:pointer"'
+          +' style="cursor:pointer" data-enc="'+enc+'"'
+          +' onclick="window.abrirModal(this.getAttribute(\"data-enc\"))"'
+          +'>'
+          +'<div style="flex:1;min-width:0">'
+          +'<div style="color:var(--white);font-weight:600;font-size:13px">'+(a.Fazenda||"—")+'</div>'
+          +(a["Produtor Rural"]?'<div style="color:var(--text3);font-size:11px">👤 '+a["Produtor Rural"]+'</div>':"")
+          +'<div style="display:flex;gap:5px;margin-top:5px;flex-wrap:wrap">'
+          +'<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:'+rc+'15;color:'+rc+'">'+(a.Colaborador||"—")+'</span>'
+          +(a.Rota?'<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:#3B82F615;color:#3B82F6">📍 '+a.Rota+'</span>':"")
+          +(a.Ciclo?'<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:#14B8A615;color:#14B8A6">C'+a.Ciclo+'</span>':"")
+          +'</div></div>'
+          +'<div style="text-align:right;flex-shrink:0">'
+          +(vNF>0?'<div style="font-size:15px;font-weight:700;color:#F97316">'+fmtBRL(vNF)+'</div>':'<div style="font-size:13px;color:var(--text3)">Sem valor</div>')
+          +'<div style="margin-top:4px">'
+          +(pago?'<span style="font-size:10px;background:rgba(20,184,166,.15);border-radius:4px;padding:2px 8px;color:#14B8A6">✓ Pago</span>'
+                :'<span style="font-size:10px;background:rgba(245,158,11,.15);border-radius:4px;padding:2px 8px;color:#F59E0B">⏳ Pendente</span>')
+          +'</div></div></div>';
+      }).join("")
+      +'</div>';
+  }).join("");
 };
 
 
